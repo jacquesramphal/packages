@@ -106,8 +106,15 @@ function shouldTransformAttribute(name) {
   ]).has(n);
 }
 
-function processMarkdownText(text) {
+function processMarkdownText(text, opts) {
   if (!text || (!text.includes("'") && !text.includes('"'))) return { changed: false, output: text, changeCount: 0 };
+
+  // MDX only. In MDX, top-level `import`/`export` statements are executable
+  // JavaScript, but they carry no fence and no backticks -- so the prose path
+  // would curl their quotes and break the module. Plain Markdown has no such
+  // statements (an `import` line there really is prose), so this stays off
+  // for .md to keep existing behaviour unchanged.
+  const mdx = Boolean(opts && opts.mdx);
 
   const edits = [];
   let i = 0;
@@ -132,6 +139,21 @@ function processMarkdownText(text) {
     while (k < text.length && text[k] !== "\n") k += 1;
     if (k < text.length && text[k] === "\n") k += 1;
     return k;
+  }
+
+  // End offset (exclusive) of a top-level ESM statement starting at `idx`.
+  // Follows bracket depth so multi-line imports are covered, and stops at the
+  // first line break taken at depth zero.
+  function esmStatementEnd(idx) {
+    const maxEnd = Math.min(text.length, idx + 4000); // bound over-skipping on malformed input
+    let depth = 0;
+    for (let k = idx; k < maxEnd; k += 1) {
+      const ch = text[k];
+      if (ch === "{" || ch === "(" || ch === "[") depth += 1;
+      else if (ch === "}" || ch === ")" || ch === "]") depth -= 1;
+      else if (ch === "\n" && depth <= 0) return k + 1;
+    }
+    return maxEnd;
   }
 
   function findMatchingParen(openParenIdx) {
@@ -172,6 +194,14 @@ function processMarkdownText(text) {
 
     if (inFence) {
       i += 1;
+      continue;
+    }
+
+    // MDX: leave top-level import/export statements untouched -- they are code.
+    if (mdx && !inlineTick && isLineStart(i) && /^(?:import|export)[\s{*]/.test(text.slice(i, i + 8))) {
+      flushSegment(i);
+      i = esmStatementEnd(i);
+      segmentStart = i;
       continue;
     }
 
@@ -388,11 +418,13 @@ function runScanner() {
     const res =
       ext === ".vue"
         ? processVueFile(filePath, text)
-        : ext === ".md" || ext === ".mdx"
+        : ext === ".md"
           ? processMarkdownText(text)
-          : ext === ".json"
-            ? processJsonFile(text)
-            : { changed: false, output: text, changeCount: 0 };
+          : ext === ".mdx"
+            ? processMarkdownText(text, { mdx: true })
+            : ext === ".json"
+              ? processJsonFile(text)
+              : { changed: false, output: text, changeCount: 0 };
 
     if (!res.changed) continue;
 

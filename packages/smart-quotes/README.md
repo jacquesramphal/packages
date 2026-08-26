@@ -84,7 +84,10 @@ toSmartQuotesInsideAttributeValue(`"I'm \"Jacques\""`); // → "I’m “Jacques
 
 ### What it will (and won’t) touch
 
-- **Markdown / MDX**: skips fenced code blocks, inline code, raw HTML tags, and link destinations.
+- **Markdown**: skips fenced code blocks, inline code, raw HTML tags, and link destinations.
+- **MDX**: the above, plus top-level `import`/`export` statements. Those are executable
+  JavaScript but carry no fence, so curling their quotes would break the module. In plain
+  Markdown an `import` line is prose, so it is still treated as prose there.
 - **General guidance**: run this on prose/content files, not on source code (JS/TS/etc).
 
 ### Automate (optional)
