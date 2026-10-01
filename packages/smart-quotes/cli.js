@@ -234,7 +234,9 @@ function processMarkdownText(text, opts) {
     }
 
     if (text[i] === "`") {
-      flushSegment(i);
+      // Only an opening tick ends a prose segment. At a closing tick the
+      // segment is the code span itself, which must never be flushed.
+      if (!inlineTick) flushSegment(i);
       inlineTick = !inlineTick;
       i += 1;
       segmentStart = i;
@@ -321,34 +323,26 @@ function processVueFile(filePath, source) {
 }
 
 function processJsonFile(source) {
-  let data;
   try {
-    data = JSON.parse(source);
+    JSON.parse(source);
   } catch {
     return { changed: false, output: source, changeCount: 0 };
   }
 
+  // Rewrite string values in place rather than re-serialising the whole file,
+  // so a fix never reflows the author's formatting. Keys and URLs are left as is.
   let changeCount = 0;
+  const output = source.replace(/"(?:[^"\\]|\\.)*"(\s*:)?/g, (token, colon) => {
+    if (colon) return token;
+    const val = JSON.parse(token);
+    if (/^https?:\/\//.test(val)) return token;
+    const next = toSmartQuotes(val);
+    if (next === val) return token;
+    changeCount += 1;
+    return JSON.stringify(next);
+  });
 
-  function walkValue(val) {
-    if (typeof val === "string") {
-      if (/^https?:\/\//.test(val)) return val;
-      const next = toSmartQuotes(val);
-      if (next !== val) changeCount += 1;
-      return next;
-    }
-    if (Array.isArray(val)) return val.map(walkValue);
-    if (val !== null && typeof val === "object") {
-      const out = {};
-      for (const [k, v] of Object.entries(val)) out[k] = walkValue(v);
-      return out;
-    }
-    return val;
-  }
-
-  const transformed = walkValue(data);
-  const output = JSON.stringify(transformed, null, 2) + "\n";
-  return { changed: output !== source, output, changeCount };
+  return { changed: changeCount > 0, output, changeCount };
 }
 
 function walkFiles(startPath, opts) {

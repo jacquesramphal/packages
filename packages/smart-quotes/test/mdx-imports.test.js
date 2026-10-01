@@ -80,5 +80,46 @@ check(
   "important ‘thing’ here\n"
 );
 
+console.log("\ninline code:");
+
+// The closing backtick used to flush the code span it had just skipped, so
+// every inline code span in Markdown was curled.
+check(
+  "inline code keeps straight quotes",
+  "Doc.md",
+  'Set `"published": true` on a "chapter".\n',
+  'Set `"published": true` on a “chapter”.\n'
+);
+
+check(
+  "several code spans on one line",
+  "Doc.md",
+  "Use `'a'` or `\"b\"`, it's fine.\n",
+  "Use `'a'` or `\"b\"`, it’s fine.\n"
+);
+
+check(
+  "quote opening inside emphasis",
+  "Doc.md",
+  'Feedback: *"We need you."* And _"this"_ too.\n',
+  'Feedback: *“We need you.”* And _“this”_ too.\n'
+);
+
+console.log("\njson:");
+
+check(
+  "json fixes values in place without reflowing",
+  "data.json",
+  '{\n  "tags": ["a", "b"],\n  "it\'s": "it\'s \\"here\\"",\n  "url": "https://x.com/?q=\'a\'"\n}\n',
+  '{\n  "tags": ["a", "b"],\n  "it\'s": "it’s “here”",\n  "url": "https://x.com/?q=\'a\'"\n}\n'
+);
+
+check(
+  "json with nothing to fix is left byte for byte",
+  "data.json",
+  '{"tags": ["a",  "b"]}\n',
+  '{"tags": ["a",  "b"]}\n'
+);
+
 console.log(failures === 0 ? "\nall passed" : `\n${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

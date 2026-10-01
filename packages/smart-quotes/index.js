@@ -5,7 +5,7 @@ function isWordChar(ch) {
 function isOpeningQuote(prevCh, nextCh) {
   // Use immediate neighbors (not prevNonSpace), otherwise: `word "Quote"` gets misclassified.
   const prevIsBoundary =
-    !prevCh || /\s/.test(prevCh) || /[([{<]/.test(prevCh) || /[–—-]/.test(prevCh);
+    !prevCh || /\s/.test(prevCh) || /[([{<*_]/.test(prevCh) || /[–—-]/.test(prevCh);
   const nextIsWordish = Boolean(nextCh) && !/[\s)\]}>.,;:!?]/.test(nextCh);
   return prevIsBoundary && nextIsWordish;
 }
