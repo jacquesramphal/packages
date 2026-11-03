@@ -4,13 +4,13 @@ Each snippet below is a self-contained HTML + CSS + JS example.
 
 ## How to set up each pen
 
-1. **JS pane:** paste the full contents of [`counter-fill.js`](./counter-fill.js) at the top, then paste the snippet's JS block below it. The library exposes `window.CounterFill` and the snippet's `CounterFill.init({...})` call paints the elements.
+1. **JS pane:** paste the full contents of [`counter-fill.js`](./counter-fill.js) at the top, then paste the snippet's JS block below it. The library exposes `window.CounterFill` and the snippet's `CounterFill.init({...})` call paints the elements. Pens 10 to 12 use options from 0.9.0 (`inset` presets, `rings`, `insetColor`, `cycle`), so they need the 0.9.0 library pasted in, not an older copy.
 2. **HTML pane:** paste the snippet's HTML.
 3. **CSS pane:** paste the snippet's CSS (the `@import` line loads the Google Font).
 
 Nothing else is required. No CodePen external resources, no font `<link>` in the HTML — the library auto-detects Google Fonts from same-origin `@font-face` rules and `<link>` tags, and the CSS auto-injects from `CounterFill.init()`.
 
-> If you'd rather link the library as an external resource instead of pasting it, add the raw URL to **Pen Settings → JS → Add External Scripts/Pens**, and keep only the `CounterFill.init({...})` call in the JS pane.
+> If you'd rather link the library as an external resource instead of pasting it, add `https://unpkg.com/@jacquesramphal/counter-fill@0.9.0/counter-fill.js` under **Pen Settings → JS → Add External Scripts/Pens**, and keep only the `CounterFill.init({...})` call in the JS pane.
 
 ---
 
@@ -488,4 +488,247 @@ window.addEventListener('load', () => CounterFill.init({
   'wm-vlr2': { stops: ['#80ffcc','#30e090','#10a060'] },
   'wm-h':    { stops: ['#ffe060','#f5c040','#e0a020'] },
 }));
+```
+
+---
+
+## 10. Inset presets — none, light, regular, heavy
+
+pen id: Pwpxepw
+
+Every inset preset side by side, plus a fifth word whose width comes from `--counter-inset` in CSS; the button cycles it and repaints. Needs the 0.9.0 library.
+
+### HTML
+
+```html
+<div class="row">
+  <div class="wrap" id="p-none"><canvas></canvas><span class="text">Bobo</span></div>
+  <p>none</p>
+</div>
+<div class="row">
+  <div class="wrap" id="p-light"><canvas></canvas><span class="text">Bobo</span></div>
+  <p>light</p>
+</div>
+<div class="row">
+  <div class="wrap" id="p-regular"><canvas></canvas><span class="text">Bobo</span></div>
+  <p>regular</p>
+</div>
+<div class="row">
+  <div class="wrap" id="p-heavy"><canvas></canvas><span class="text">Bobo</span></div>
+  <p>heavy</p>
+</div>
+<div class="row">
+  <div class="wrap" id="p-css"><canvas></canvas><span class="text">Bobo</span></div>
+  <p>from CSS: <code>--counter-inset</code> <button id="cycle">heavy</button></p>
+</div>
+```
+
+### CSS
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,800&display=swap');
+
+body { background: #1b1410; color: #fbe59a; font-family: system-ui, sans-serif; padding: 48px 32px; display: grid; gap: 32px; }
+.row { display: flex; align-items: center; gap: 24px; }
+.row p { opacity: 0.7; }
+.text { font-family: 'Fraunces', serif; font-weight: 800; font-size: clamp(64px, 12vw, 140px); color: #fbe59a; line-height: 1; }
+#p-css { --counter-inset: heavy; }
+button { font: inherit; padding: 4px 10px; margin-left: 8px; }
+```
+
+### JS (paste below the `counter-fill.js` library)
+
+```js
+const fill = { stops: ['#ec9683'] };
+const FILLS = {
+  'p-none':    { ...fill, inset: 'none' },
+  'p-light':   { ...fill, inset: 'light' },
+  'p-regular': { ...fill, inset: 'regular' },
+  'p-heavy':   { ...fill, inset: 'heavy' },
+  'p-css':     { ...fill, inset: 'var(--counter-inset)' },
+};
+document.fonts.ready.then(() => CounterFill.init(FILLS));
+
+// The width lives in the stylesheet: change the property, repaint.
+const names = ['none', 'light', 'regular', 'heavy'];
+document.getElementById('cycle').addEventListener('click', (e) => {
+  const next = names[(names.indexOf(e.target.textContent) + 1) % names.length];
+  e.target.textContent = next;
+  const el = document.getElementById('p-css');
+  el.style.setProperty('--counter-inset', next);
+  CounterFill.paint(el, FILLS);
+});
+```
+
+---
+
+## 11. Contour rings, on a variable weight
+
+pen id: ByWGxWo
+
+Three contour rings in each counter (`rings`), on a variable weight. The sliders change the weight and the ring count; the rings follow the counters as they open up. Needs the 0.9.0 library.
+
+### HTML
+
+```html
+<div class="wrap" id="contour"><canvas></canvas><span class="text">Design. Code.</span></div>
+<label>Weight <input id="wght" type="range" min="300" max="900" value="500"> <output>500</output></label>
+<label>Rings <input id="rings" type="range" min="1" max="4" value="3"> <output>3</output></label>
+```
+
+### CSS
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&display=swap');
+
+body { background: #fbe59a; color: #38211c; font-family: system-ui, sans-serif; padding: 48px 32px; display: grid; gap: 20px; }
+#contour {
+  --heading-weight: 500;
+  --counter-inset: max(2px, 0.034em);
+}
+#contour .text { font-family: 'Fraunces', serif; font-weight: var(--heading-weight); font-size: clamp(64px, 13vw, 160px); line-height: 1; }
+label { display: flex; gap: 12px; align-items: center; }
+```
+
+### JS (paste below the `counter-fill.js` library)
+
+```js
+const FILLS = {
+  contour: {
+    stops: ['currentColor'],
+    inset: 'var(--counter-inset)',
+    rings: 3,
+    insetColor: '#fbe59a',
+  },
+};
+document.fonts.ready.then(() => CounterFill.init(FILLS));
+
+const el = document.getElementById('contour');
+document.getElementById('wght').addEventListener('input', (e) => {
+  e.target.nextElementSibling.value = e.target.value;
+  el.style.setProperty('--heading-weight', e.target.value);
+  CounterFill.paint(el, FILLS); // the rings follow the counters as they open up
+});
+document.getElementById('rings').addEventListener('input', (e) => {
+  e.target.nextElementSibling.value = FILLS.contour.rings = Number(e.target.value);
+  CounterFill.paint(el, FILLS);
+});
+```
+
+---
+
+## 12. Live theme colours, a colour per counter, sharp at any zoom
+
+pen id: bNqQMqp
+
+A colour per counter carried across multi-line text (`cycle`), with the ring in the page colour (`insetColor`). Every colour is a `var()`, so the theme button recolours fills and rings with no repaint. The fills are vector, so they stay sharp under zoom. Needs the 0.9.0 library.
+
+### HTML
+
+```html
+<button id="theme">Switch theme</button>
+<h1 class="wrap-multi" id="cycle-words">Golden Baroque Obsidian Aperture</h1>
+<p class="mode">Mode: <span id="mode"></span>. Pinch or zoom in: the fills are vector.</p>
+```
+
+### CSS
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+
+:root { --bg: #fbe59a; --ink: #38211c; --a: #ec9683; --b: #c48dad; --c: #be695a; }
+:root.dark { --bg: #38211c; --ink: #fbe59a; --a: #f5c842; --b: #7fb7a4; --c: #e07a5f; }
+
+body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; padding: 48px 32px; transition: background 0.3s; }
+#cycle-words { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: clamp(56px, 10vw, 120px); line-height: 1.1; color: var(--ink); }
+button { font: inherit; padding: 6px 14px; margin-bottom: 24px; }
+.mode { opacity: 0.7; margin-top: 24px; }
+```
+
+### JS (paste below the `counter-fill.js` library)
+
+```js
+document.fonts.ready.then(async () => {
+  await CounterFill.init({
+    'cycle-words': {
+      // One colour per counter, carrying on from word to word.
+      cycle: ['var(--a)', 'var(--b)', 'var(--c)'],
+      inset: 'regular',
+      // The ring is the page colour, and stays live.
+      insetColor: 'var(--bg)',
+    },
+  });
+  const painted = document.querySelector('#cycle-words[data-cf-mode], #cycle-words [data-cf-mode]');
+  document.getElementById('mode').textContent = painted ? painted.dataset.cfMode : 'not painted';
+});
+
+// No repaint: the fills and rings are CSS colours, so var() follows the theme.
+document.getElementById('theme').addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark');
+});
+```
+
+---
+
+## 13. Vector vs canvas
+
+pen id: JoWevNm
+
+The same word painted both ways: vector, the default since 0.5.0, and canvas (`vector: false`), the only mode before it. The button zooms both 4× with a transform, the way a pinch zoom scales a page, so nothing repaints. The vector fill stays sharp; the canvas fill is a bitmap and goes soft. Each element reports which way it was painted in `data-cf-mode`. Needs the 0.9.0 library.
+
+### HTML
+
+```html
+<button id="zoom">Zoom in 4×</button>
+<div class="stage">
+  <figure>
+    <figcaption>vector <code>(default)</code></figcaption>
+    <div class="window">
+      <div class="wrap" id="as-vector"><canvas></canvas><span class="text">Bob</span></div>
+    </div>
+  </figure>
+  <figure>
+    <figcaption>canvas <code>vector: false</code></figcaption>
+    <div class="window">
+      <div class="wrap" id="as-canvas"><canvas></canvas><span class="text">Bob</span></div>
+    </div>
+  </figure>
+</div>
+```
+
+### CSS
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,800&display=swap');
+
+body { background: #1b1410; color: #fbe59a; font-family: system-ui, sans-serif; padding: 48px 32px; margin: 0; }
+button { font: inherit; padding: 6px 14px; margin-bottom: 32px; }
+.stage { display: flex; gap: 32px; flex-wrap: wrap; }
+figure { margin: 0; }
+figcaption { opacity: 0.7; margin-bottom: 12px; }
+/* Each word sits in its own window, so zooming in stays inside it. */
+.window { width: 300px; height: 180px; overflow: hidden; border: 1px solid rgba(251, 229, 154, 0.25); border-radius: 8px; display: grid; place-items: center; }
+.text { font-family: 'Fraunces', serif; font-weight: 800; font-size: 120px; color: #fbe59a; line-height: 1; }
+/* Zoomed with a transform, the way a pinch zoom scales the page: no
+   relayout, so nothing repaints. The vector fill stays sharp; the canvas
+   fill is a bitmap and goes soft. Aimed at the o. */
+.wrap { transform-origin: 62% 62%; transition: transform 0.4s ease; }
+.zoomed .wrap { transform: scale(4); }
+```
+
+### JS (paste below the `counter-fill.js` library)
+
+```js
+const fill = { stops: ['#ec9683', '#be695a'], inset: 'regular' };
+document.fonts.ready.then(() =>
+  CounterFill.init({
+    'as-vector': { ...fill },
+    'as-canvas': { ...fill, vector: false },
+  }),
+);
+
+document.getElementById('zoom').addEventListener('click', (e) => {
+  const on = document.body.classList.toggle('zoomed');
+  e.target.textContent = on ? 'Zoom out' : 'Zoom in 4×';
+});
 ```

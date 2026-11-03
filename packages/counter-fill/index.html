@@ -60,6 +60,17 @@ body {
 .vfd1 .text { font-variation-settings:'SOFT' 0; }
 .vfd2 .text { font-variation-settings:'SOFT' 50; }
 .vfd3 .text { font-variation-settings:'SOFT' 100; }
+
+/* ── 0.9: insets, rings, a colour per counter, vector vs canvas ── */
+.in1 .text, .in2 .text, .in3 .text, .in4 .text { font-family:'Fraunces',serif; font-size:clamp(60px,15vw,140px); font-weight:800; color:var(--foreground); }
+.rg .text { font-family:'Fraunces',serif; font-size:clamp(60px,14vw,150px); font-weight:var(--ring-weight, 500); color:var(--foreground); --counter-inset:max(2px, 0.034em); }
+.cy { font-family:'Fraunces',serif; font-size:clamp(48px,11vw,110px); font-weight:800; color:var(--foreground); max-width:min(680px,88vw); }
+.zoom-row { display:flex; gap:var(--spacing-md); flex-wrap:wrap; justify-content:center; }
+.zoom-window { width:300px; height:180px; overflow:hidden; border:var(--border); border-radius:8px; display:grid; place-items:center; }
+.zoom-window .text { font-family:'Fraunces',serif; font-size:120px; font-weight:800; color:var(--foreground); }
+.zoom-window .wrap { transform-origin:62% 62%; transition:transform 0.4s ease; }
+.zoomed .zoom-window .wrap { transform:scale(4); }
+.lab-button { font:inherit; font-size:var(--font-3xs); padding:4px 12px; }
 </style>
 </head>
 <body>
@@ -124,9 +135,41 @@ body {
     <div class="wrap vfd3" id="vfd3"><canvas></canvas><span class="text">Baroque</span></div>
   </div>
 
+  <div class="section">
+    <div class="section-label">Inset presets <span>· a ring of page colour between stroke and fill</span></div>
+    <div class="tag">inset: 'none'</div>
+    <div class="wrap in1" id="in1"><canvas></canvas><span class="text">Bobo</span></div>
+    <div class="tag">inset: 'light'</div>
+    <div class="wrap in2" id="in2"><canvas></canvas><span class="text">Bobo</span></div>
+    <div class="tag">inset: 'regular'</div>
+    <div class="wrap in3" id="in3"><canvas></canvas><span class="text">Bobo</span></div>
+    <div class="tag">inset: 'heavy'</div>
+    <div class="wrap in4" id="in4"><canvas></canvas><span class="text">Bobo</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Contour rings <span>· rings: 3 · inset 0.034em · any weight</span></div>
+    <div class="wrap rg" id="rg"><canvas></canvas><span class="text">Design. Code.</span></div>
+    <div class="tag"><label>weight <input id="rg-weight" type="range" min="300" max="900" value="500"></label></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">A colour per counter <span>· cycle, carried across lines</span></div>
+    <div class="wrap-multi cy" id="cy">Golden Baroque Obsidian Aperture</div>
+  </div>
+
+  <div class="section" id="zoom-section">
+    <div class="section-label">Vector vs canvas <span>· zoomed with a transform, so nothing repaints</span></div>
+    <button class="lab-button" id="zoom">Zoom in 4×</button>
+    <div class="zoom-row">
+      <div><div class="tag">vector (default)</div><div class="zoom-window"><div class="wrap" id="zv"><canvas></canvas><span class="text">Bob</span></div></div></div>
+      <div><div class="tag">vector: false</div><div class="zoom-window"><div class="wrap" id="zc"><canvas></canvas><span class="text">Bob</span></div></div></div>
+    </div>
+  </div>
+
 <script src="./counter-fill.js"></script>
 <script>
-document.fonts.ready.then(() => CounterFill.init({
+const FILLS = {
   w1:  { stops: ['#f5c842','#d4820a','#7a3a08'] },
   w2:  { stops: ['#ff6060','#c01020','#600010'] },
   w3:  { stops: ['#e05c5c','#a01830','#4a0010'] },
@@ -149,7 +192,27 @@ document.fonts.ready.then(() => CounterFill.init({
   vfd1: { stops: ['#c0a8ff','#6030c0','#200860'] },
   vfd2: { stops: ['#c0a8ff','#6030c0','#200860'] },
   vfd3: { stops: ['#c0a8ff','#6030c0','#200860'] },
-}));
+  in1:  { stops: ['#ec9683'], inset: 'none' },
+  in2:  { stops: ['#ec9683'], inset: 'light' },
+  in3:  { stops: ['#ec9683'], inset: 'regular' },
+  in4:  { stops: ['#ec9683'], inset: 'heavy' },
+  rg:   { stops: ['currentColor'], inset: 'var(--counter-inset)', rings: 3 },
+  cy:   { cycle: ['#ec9683','#c48dad','#be695a','#f5c842'], inset: 'regular' },
+  zv:   { stops: ['#ec9683','#be695a'], inset: 'regular' },
+  zc:   { stops: ['#ec9683','#be695a'], inset: 'regular', vector: false },
+};
+document.fonts.ready.then(() => CounterFill.init(FILLS));
+
+// The ring weight lives in CSS; CounterFill reads it each paint.
+document.getElementById('rg-weight').addEventListener('input', (e) => {
+  const el = document.getElementById('rg');
+  el.style.setProperty('--ring-weight', e.target.value);
+  CounterFill.paint(el, FILLS);
+});
+document.getElementById('zoom').addEventListener('click', (e) => {
+  const on = document.getElementById('zoom-section').classList.toggle('zoomed');
+  e.target.textContent = on ? 'Zoom out' : 'Zoom in 4×';
+});
 </script>
 </body>
 </html>
