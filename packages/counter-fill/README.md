@@ -188,6 +188,7 @@ and they combine freely.
 | `stops` | `string[]`           | One colour fills every counter. Two or more become a radial gradient across the word, from the inside out. |
 | `cycle` | `string[]`           | Instead of one fill, hand the colours to the counters one at a time, left to right. On multi-line text the cycle carries on from word to word. Takes precedence over `stops`. |
 | `inset` | `string` or `number` | Pull each fill back from its letter, leaving a ring of background between stroke and colour. Use a preset, `'none'`, `'light'`, `'regular'` or `'heavy'` (below), or your own width: a number is CSS pixels (`4`), and a string is any CSS length resolved against the element (`'0.03em'`, `'max(3px, 0.045em)'`, `calc()`). `'var(--counter-inset)'` reads a custom property, which can hold a preset name or a length, so the width can live in your stylesheet. The ring edge is antialiased. |
+| `rings` | `number` | With an `inset`, draw that many rings instead of one: bands of the inset width, alternating background and fill, stepping in from the counter's edge, like contour lines. `rings: 3` with `inset: '0.034em'` is the ramphal.design hero. Narrow counters show fewer rings, since the bands are clipped to the counter. Works in vector, mask and canvas modes. |
 | `insetMin` | `number` | A floor for an `em` inset, in CSS pixels. On small text an em ring can get too thin to see; `inset: '0.03em', insetMin: 2.5` scales with the type but never drops below 2.5px. |
 | `insetColor` | `string` | Vector mode: the ring's colour. Defaults to the first solid background behind the element. Any CSS colour works, `var()` included, and it stays live, so `insetColor: 'var(--background)'` follows a theme switch with no repaint. Without a solid background (an image or gradient behind the text), the ring is cut with an SVG mask instead. |
 | `vector` | `boolean` | On by default. The fills are drawn as SVG paths, so they stay sharp at any zoom (pinch zoom, print). Each counter's edge is traced from the letter's antialiased raster and smoothed into curves; no font data needed. If a counter can't be traced, or SVG isn't available, that word falls back to the canvas fill on its own. Fill colours are set as CSS, so `var()` colours follow a theme switch with no repaint. Each painted element gets `data-cf-mode="vector"` or `"canvas"`. Set `false` to always use the canvas. |
@@ -210,6 +211,8 @@ CounterFill.init({
   'my-word-6': { cycle: ['var(--color-a)', 'var(--color-b)'], inset: '0.03em' },
   // Width from the stylesheet: #my-word-7 { --counter-inset: heavy; }
   'my-word-7': { stops: ['currentColor'], inset: 'var(--counter-inset)' },
+  // Three contour rings in each counter
+  'my-word-8': { stops: ['currentColor'], inset: '0.034em', rings: 3 },
 });
 ```
 
@@ -419,7 +422,9 @@ Safari's SVG engine partially applies `font-variation-settings` — standard axe
 
 ## Changelog
 
-0.2.0 to 0.7.1 were built in the site repo and reach npm together as 0.8.0.
+0.2.0 to 0.8.0 were built in the site repo and reach npm together as 0.9.0.
+
+**0.9.0** — `rings`: several rings in each counter, as alternating bands of the inset width, in vector (painted or masked) and canvas modes.
 
 **0.8.0** — Vector rings are painted strokes instead of a mask, so they stay sharp under Safari's pinch zoom; a mask is the fallback when there's no solid background. `insetColor`. Vector fill and ring colours stay live as CSS, so `var()` colours follow a theme switch. `data-cf-mode` on each painted element. Carries the fixes published in 0.1.2 and 0.1.3: the variable-font check no longer gives false negatives before a font loads, font downloads retry once, and `init()` repaints once late-loading fonts arrive (embed iframes such as CodePen).
 

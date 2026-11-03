@@ -1,6 +1,6 @@
 {
   "name": "@jacquesramphal/counter-fill",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Fill the enclosed counter spaces inside letterforms with a colour, a gradient or a colour per counter, inset by a ring if you like. Vector by default, any font, any size.",
   "license": "MIT",
   "private": false,

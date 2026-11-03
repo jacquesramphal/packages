@@ -39,6 +39,8 @@
  *            'light', 'regular', 'heavy'), px (4) or any CSS length ('0.03em',
  *            'var(--counter-inset)', 'max(2px, 0.04em)')
  *     insetMin  a floor for an em inset, in px, so small text keeps its ring
+ *     rings  how many rings (default 1): bands of the inset width, alternating
+ *            background and fill, stepping in from the edge
  *     insetColor  the ring's colour in vector mode (default: the background
  *            behind the element); var() works, so it can follow a theme
  *     vector  draw the fills as SVG paths (default true); false uses the canvas
@@ -445,9 +447,17 @@
       const f = new Float64Array(N);
       for (let i = 0; i < N; i++) f[i] = label[i] ? EDT_FAR : 0;
       _edt(f, pw, ph);
+      // rings > 1: bands of width R alternate gap and fill in from the edge.
+      // Each boundary is a one-pixel ramp, so every band edge is antialiased.
+      const nb = 2 * Math.max(1, Math.floor(fill.rings || 1)) - 1;
       for (let i = 0; i < N; i++) {
         if (!label[i]) continue;
-        const a = Math.sqrt(f[i]) - R;
+        const d = Math.sqrt(f[i]);
+        let a = 0;
+        for (let b = 1; b <= nb; b++) {
+          const t = d - b * R;
+          a += (b % 2 ? 1 : -1) * (t <= 0 ? 0 : t >= 1 ? 1 : t);
+        }
         if (a <= 0) continue;
         alpha[i] = a >= 1 ? 1 : a;
         owner[i] = label[i];
@@ -769,7 +779,26 @@
     // fill's insetColor (any CSS colour, var() included, so it follows a
     // theme), or the nearest solid background behind the element.
     const ringColour = R ? (fill.insetColor || _solidBackground(cv.parentNode)) : null;
-    if (R && ringColour) {
+    const rings = Math.max(1, Math.floor(fill.rings || 1));
+    if (R && ringColour && rings > 1) {
+      // Several rings: bands of width R, alternating background and fill,
+      // stepping in from the counter's edge. Each band is the edge stroked at
+      // twice its depth, widest first, clipped to the counter so the strokes
+      // never spill onto the letter or past it.
+      paths.forEach((p, k) => {
+        const clip = _el('clipPath', { id: id + 'c' + k });
+        clip.appendChild(_el('path', { d: p }));
+        defs.appendChild(clip);
+        const g = _el('g', { 'clip-path': 'url(#' + id + 'c' + k + ')' });
+        g.appendChild(_fillPath(p, paintFor(k)));
+        for (let b = 2 * rings - 1; b >= 1; b--) {
+          const band = _el('path', { d: p, fill: 'none', 'stroke-width': 2 * b * R, 'stroke-linejoin': 'round' });
+          band.style.stroke = b % 2 ? ringColour : paintFor(k);
+          g.appendChild(band);
+        }
+        group.appendChild(g);
+      });
+    } else if (R && ringColour) {
       // Each fill, then the same edge stroked 2R wide in the background
       // colour. The fill layer sits under the text, so the stroke's outer half
       // is hidden by the letter and its inner half is the ring. Plain paths,
@@ -789,7 +818,21 @@
       // letter, where the mask is already black).
       const mask = _el('mask', { id: id + 'm', maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: pw, height: ph });
       mask.appendChild(_el('rect', { x: 0, y: 0, width: pw, height: ph, fill: 'black' }));
-      for (const p of paths) mask.appendChild(_el('path', { d: p, fill: 'white', stroke: 'black', 'stroke-width': 2 * R, 'stroke-linejoin': 'round' }));
+      paths.forEach((p, k) => {
+        if (rings === 1) {
+          mask.appendChild(_el('path', { d: p, fill: 'white', stroke: 'black', 'stroke-width': 2 * R, 'stroke-linejoin': 'round' }));
+          return;
+        }
+        const clip = _el('clipPath', { id: id + 'mc' + k });
+        clip.appendChild(_el('path', { d: p }));
+        defs.appendChild(clip);
+        const g = _el('g', { 'clip-path': 'url(#' + id + 'mc' + k + ')' });
+        g.appendChild(_el('path', { d: p, fill: 'white' }));
+        for (let b = 2 * rings - 1; b >= 1; b--) {
+          g.appendChild(_el('path', { d: p, fill: 'none', stroke: b % 2 ? 'black' : 'white', 'stroke-width': 2 * b * R, 'stroke-linejoin': 'round' }));
+        }
+        mask.appendChild(g);
+      });
       defs.appendChild(mask);
       group.setAttribute('mask', 'url(#' + id + 'm)');
       paths.forEach((p, k) => group.appendChild(_fillPath(p, paintFor(k))));
