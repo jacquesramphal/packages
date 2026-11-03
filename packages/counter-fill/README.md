@@ -236,6 +236,29 @@ CounterFill.init({ 'my-heading': { stops: ['currentColor'], inset: 'var(--counte
 CounterFill.insetPresets; // { none, light, regular, heavy } as CSS lengths
 ```
 
+### Recipe: contour counters
+
+Ink counters with three rings, set from CSS so the weight and ring width can change without touching the script. CounterFill reads the text's computed weight every time it paints, so any weight on a variable font works; the rings follow the counters, which open up as the type gets lighter.
+
+```css
+#my-heading {
+  --heading-weight: 500;          /* try 350 for a lighter take */
+  --counter-inset: max(2px, 0.034em);
+  font-weight: var(--heading-weight);
+}
+```
+
+```js
+CounterFill.init({
+  'my-heading': {
+    stops: ['currentColor'],
+    inset: 'var(--counter-inset)',
+    rings: 3,
+    insetColor: 'var(--page-bg)', // the colour behind the text, so a theme switch needs no repaint
+  },
+});
+```
+
 ### Why inset
 
 Without it, the fill runs right up to the stroke (it is grown slightly under
