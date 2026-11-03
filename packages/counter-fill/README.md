@@ -316,7 +316,8 @@ await CounterFill.registerFont('My Font', '/fonts/my-font-italic.woff2', { style
 
 ## Links
 
-- [GitHub](https://github.com/jacquesramphal/jacquesramphal.github.io/tree/main/packages/counter-fill)
+- [How it was built](https://ramphal.design/doc/counter-fill), the article on ramphal.design
+- [Live demo](https://ramphal.design/lab/counter-fill/)
 - [npm](https://www.npmjs.com/package/@jacquesramphal/counter-fill)
 
 ---
