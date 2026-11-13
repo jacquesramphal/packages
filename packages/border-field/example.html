@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Border field — example</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 0 16px; font: 17px/1.5 system-ui, sans-serif; background: #f5f4f1; color: #1f1a17; }
+      @media (prefers-color-scheme: dark) { body { background: #38211c; color: #fbe59a; } }
+      form { width: min(480px, 100%); --bf-ink: currentColor; --bf-danger: #d43a3a; }
+      label { display: block; margin-bottom: 12px; font-weight: 600; }
+      /* The field. A plain border stands in until the script runs, then
+         steps aside for the drawn one. */
+      .box { display: flex; gap: 8px; align-items: center; padding: 6px 8px 6px 18px; border: 3px solid currentColor; border-radius: 16px; }
+      form.bf-ready .box { border-color: transparent; }
+      input { flex: 1; min-width: 0; font: inherit; font-size: 1.15rem; color: inherit; background: transparent; border: 0; outline: 0; padding: 10px 0; }
+      button { font: inherit; font-weight: 600; color: inherit; background: transparent; border: 0; padding: 8px 10px; cursor: pointer; border-radius: 8px; }
+      button:focus-visible { outline: 2px solid currentColor; }
+      .msg { min-height: 1.5em; margin: 20px 0 0; }
+      .msg[data-state='error'] { color: #d43a3a; }
+      .bf-ready.is-shaking .box { animation: shake 0.45s ease; }
+      @keyframes shake { 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-2px); } }
+    </style>
+  </head>
+  <body>
+    <!-- A normal form. Take the script away and it still works. -->
+    <form action="/subscribe" method="post">
+      <label for="email">Email address</label>
+      <div class="box">
+        <input id="email" name="email" type="email" required placeholder="you@example.com" aria-describedby="email-msg" />
+        <button type="submit">Subscribe</button>
+      </div>
+      <p class="msg" id="email-msg" role="status" aria-live="polite"></p>
+    </form>
+
+    <script src="border-field.js"></script>
+    <script>
+      BorderField.enhance(document.querySelector('form'), {
+        // Send it however you like; here it waits and succeeds.
+        onSubmit: () => new Promise((resolve) => setTimeout(resolve, 1500)),
+        messages: { sent: 'On its way. Check your inbox to confirm.' },
+      });
+    </script>
+  </body>
+</html>

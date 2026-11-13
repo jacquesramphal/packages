@@ -1,0 +1,37 @@
+{
+  "name": "@jacquesramphal/border-field",
+  "version": "0.1.0",
+  "description": "An input whose outline is its state: it follows the caret while you type, waves while it sends, goes jagged when it's wrong, and bursts when it's sent. A real form underneath, no dependencies.",
+  "license": "MIT",
+  "private": false,
+  "main": "./border-field.js",
+  "types": "./border-field.d.ts",
+  "exports": {
+    ".": {
+      "types": "./border-field.d.ts",
+      "default": "./border-field.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "border-field.js",
+    "border-field.d.ts",
+    "example.html",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "homepage": "https://ramphal.design/lab/expressive-forms/",
+  "keywords": [
+    "form",
+    "input",
+    "validation",
+    "animation",
+    "svg",
+    "border",
+    "micro-interaction"
+  ]
+}
