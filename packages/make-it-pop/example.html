@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Make it pop playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+<style>
+  /* One column, the site's paper and ink: the form is the only thing on the page. */
+  :root {
+    --paper: #f5f4f1;
+    --ink: #1f1a17;
+    --muted: #6b625c;
+    --danger: #e74646;
+    --line: 2px;
+    --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --paper: #38211c; --ink: #fbe59a; --muted: #cdb98a; --danger: #ff8a7a; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --paper: #38211c; --ink: #fbe59a; --muted: #cdb98a; --danger: #ff8a7a; color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 17px/1.5 var(--body);
+    padding-block: 48px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 520px; margin: 0 auto; display: grid; gap: 40px; }
+  h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 8px; font-weight: 500; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+  form { display: grid; gap: 28px; --bf-ink: var(--ink); --bf-danger: var(--danger); --pop-danger: var(--danger); }
+  .group { display: grid; gap: 12px; }
+  .group > span, legend { font-weight: 500; padding: 0; }
+  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+
+  /* The field: a plain border until the script draws its own. */
+  .box { display: flex; gap: 8px; align-items: center; min-height: 60px; padding: 0 12px 0 20px; border: var(--line) solid currentColor; border-radius: 8px; }
+  form.bf-ready .box { border-color: transparent; }
+  input[type=email] { flex: 1; min-width: 0; font: inherit; color: inherit; background: transparent; border: 0; outline: 0; padding: 14px 0; }
+  .send { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; color: inherit; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+  .send svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: var(--line); stroke-linecap: round; stroke-linejoin: round; }
+  .send:focus-visible { outline: 2px solid currentColor; }
+  .msg { min-height: 1.5em; margin: 0; }
+  .msg[data-state=error] { color: var(--danger); }
+  .msg button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: var(--line); text-underline-offset: 0.2em; }
+  .msg button strong { font-weight: 700; }
+
+  .check { display: flex; gap: 12px; align-items: center; cursor: pointer; width: fit-content; }
+  .check.is-required { margin-top: 4px; }
+  .hint { color: var(--muted); font-size: 0.9rem; margin: 0; }
+  .note { color: var(--muted); font-size: 0.9rem; margin: 0; border-top: var(--line) solid currentColor; padding-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Make it pop playground</h1>
+    <p>The real package code: the border field, "did you mean" on send, and the first checkbox. Try <em>you@gmial.com</em>, or send without ticking the last box. Nothing is sent anywhere.</p>
+  </header>
+
+  <form id="signup" action="#" method="post">
+    <label class="group" for="email">
+      <span>Email address</span>
+      <div class="box">
+        <input id="email" name="email" type="email" required placeholder="you@example.com" autocomplete="email" aria-describedby="email-msg" />
+        <button class="send" type="submit" aria-label="Subscribe"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg></button>
+      </div>
+    </label>
+    <p class="msg" id="email-msg" role="status" aria-live="polite"></p>
+
+    <fieldset>
+      <legend>Send me</legend>
+      <label class="check" for="t-essays"><input id="t-essays" name="topics" value="essays" type="checkbox" data-pop checked /> Essays</label>
+      <label class="check" for="t-labs"><input id="t-labs" name="topics" value="labs" type="checkbox" data-pop /> Lab experiments</label>
+      <label class="check" for="t-talks"><input id="t-talks" name="topics" value="talks" type="checkbox" data-pop /> Talks</label>
+      <label class="check is-required" for="human"><input id="human" name="human" type="checkbox" data-pop required /> I'm a person, not a bot</label>
+    </fieldset>
+  </form>
+
+  <p class="note">Draft 0.0.1 of <strong>make-it-pop</strong>. Each element enhances a real one, so the form still works with the script taken away.</p>
+</main>
+
+<script src="../border-field/border-field.js"></script>
+<script src="make-it-pop.js"></script>
+<script>
+  (function () {
+    const form = document.getElementById('signup');
+    const input = document.getElementById('email');
+    const msg = document.getElementById('email-msg');
+    const boxes = MakeItPop.enhance(form);
+    const human = boxes.find((b) => b.input.id === 'human');
+    let offered = '';
+
+    // Before the field's own submit: a required box left empty, and a
+    // likely typo, each stop the send with their own state.
+    form.addEventListener('submit', (e) => {
+      if (!human.input.checked) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        human.set('error');
+        msg.textContent = 'Tick the last box first.'; msg.dataset.state = 'error';
+        return;
+      }
+      const s = input.checkValidity() && MakeItPop.suggestEmail(input.value);
+      if (s && offered !== input.value.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        offered = input.value.toLowerCase();
+        msg.dataset.state = '';
+        msg.innerHTML = '';
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = s.local + '@<strong>' + s.domain + '</strong>';
+        b.addEventListener('click', () => { input.value = s.address; offered = ''; msg.textContent = ''; field.field.valid(); field.field.key(); input.focus(); });
+        msg.append('Did you mean ', b, '?');
+        field.field.key();
+        return;
+      }
+    }, true);
+    input.addEventListener('input', () => { if (offered && input.value.toLowerCase() !== offered) { offered = ''; msg.textContent = ''; } });
+
+    const field = MakeItPop.field(form, {
+      input, box: form.querySelector('.box'), message: msg,
+      typing: 'follow', error: 'drawn', uniformity: 0, jagLength: 18, drawnHit: 9, drawnRest: 4.5, soften: true, shake: false, errorBounce: 7,
+      loading: 'orbit', waveAmp: 6, waveLength: 22, success: 'pieces', stroke: 2, radius: 8, focusStroke: 0,
+      onSubmit: () => new Promise((resolve) => setTimeout(resolve, 1400)),
+      messages: { sent: 'Almost there. Check your inbox to confirm.', empty: 'Add your email address first.', invalid: 'Please enter a valid email address.' },
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "@jacquesramphal/make-it-pop",
+  "version": "0.0.1",
+  "description": "Standard form elements with some life in them: a field whose border is its state, a checkbox that draws its tick, and \"did you mean\" on send. Each one enhances a real element, so the form works without it.",
+  "license": "MIT",
+  "private": true,
+  "main": "./make-it-pop.js",
+  "files": ["make-it-pop.js", "README.md"],
+  "peerDependencies": {
+    "@jacquesramphal/border-field": "^0.2.0"
+  },
+  "keywords": ["form", "input", "checkbox", "animation", "validation", "accessible", "progressive-enhancement"]
+}
