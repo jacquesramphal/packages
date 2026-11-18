@@ -12,7 +12,8 @@ export interface BorderFieldParams {
   /** How quickly they stop wobbling. */
   damping?: number;
 
-  typing?: 'follow' | 'jiggle' | 'ripple';
+  /** 'wave' is a ripple that only runs right; 'cloud' bumps all round. */
+  typing?: 'follow' | 'jiggle' | 'ripple' | 'wave' | 'cloud';
   followAmp?: number;
   followWidth?: number;
   followKick?: number;
@@ -20,8 +21,14 @@ export interface BorderFieldParams {
   jiggleKick?: number;
   rippleAmp?: number;
   rippleSpeed?: number;
+  /** Ripple: 'both' ways from the caret, or 'forward' (what typing 'wave' does). */
+  rippleWay?: 'both' | 'forward';
+  cloudSize?: number;
+  cloudAmp?: number;
+  cloudKick?: number;
 
-  loading?: 'wave' | 'spinner';
+  /** 'orbit' is one wave circling the field. */
+  loading?: 'wave' | 'spinner' | 'orbit';
   waveAmp?: number;
   waveLength?: number;
   waveSpeed?: number;
@@ -29,18 +36,51 @@ export interface BorderFieldParams {
   spinLength?: number;
   /** Laps a second. */
   spinSpeed?: number;
+  /** Orbit: share of the perimeter the wave covers. */
+  orbitPacket?: number;
+  /** Orbit: seconds per lap. */
+  orbitLap?: number;
 
-  error?: 'jagged' | 'pulse';
+  /** 'spring' overshoots and settles; 'drawn' hits at full size and settles smaller. */
+  error?: 'jagged' | 'pulse' | 'spring' | 'drawn';
   jagAmp?: number;
   jagLength?: number;
   pulseAmp?: number;
   pulseRate?: number;
   shake?: boolean;
+  springRate?: number;
+  springBounce?: number;
+  drawnHit?: number;
+  drawnRest?: number;
+  drawnSettle?: number;
+  /** Editing after an error drops the teeth but keeps the line red until it's valid. */
+  soften?: boolean;
+  /** px the border swells when an error lands, then springs back in. */
+  errorBounce?: number;
 
-  success?: 'sunburst' | 'confetti' | 'both';
+  /** 'pieces': the outline flies apart and draws back; 'ticks': it turns into ticks and closes. */
+  success?: 'sunburst' | 'confetti' | 'both' | 'pieces' | 'ticks';
   rayLength?: number;
   raySpacing?: number;
   confettiSpacing?: number;
+  pieceLength?: number;
+  flyFar?: number;
+  fall?: number;
+  spin?: number;
+  flyTime?: number;
+  redrawAt?: number;
+  ticksHold?: number;
+  ticksDrift?: number;
+  /** px the outline breathes out and back once it's whole after a send. */
+  settle?: number;
+
+  /** 1: every tooth, bump and piece alike. 0: hand-drawn. */
+  uniformity?: number;
+  /** Seconds, roughly, for the last state's shape to spring away. */
+  handoff?: number;
+  handoffBounce?: number;
+  /** Seconds' beat before a new state starts. */
+  stateDelay?: number;
 }
 
 export interface BorderFieldCreateOptions extends BorderFieldParams {
@@ -58,6 +98,10 @@ export interface BorderFieldEngine {
   /** A keystroke, optionally at x. */
   key(x?: number): void;
   focus(on: boolean): void;
+  /** The address is valid again: drop the red a softened error kept. */
+  valid(): void;
+  /** Draw the outline in from nothing. */
+  drawIn(): void;
   stop(): void;
 }
 

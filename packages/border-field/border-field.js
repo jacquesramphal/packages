@@ -29,6 +29,22 @@
  * The outline is drawn round rootEl's .box (or options.box, or rootEl), in an
  * <svg class="edge"> it adds if there isn't one. rootEl gets the class
  * bf-ready, so a CSS border can stand in until then and step aside after.
+ *
+ * Draft 2 (2026-11-18) added options and changed no defaults:
+ *   typing 'cloud'      soft bumps all round, puffed by each key
+ *   typing 'wave'       a ripple that only runs right, the way you type
+ *   loading 'orbit'     one wave travelling round, the rest of the line calm
+ *   error 'spring'      the teeth spring out past their size and settle
+ *   error 'drawn'       the first draft 2: uneven teeth that hit at full
+ *                       size and settle smaller, no bounce (set uniformity
+ *                       to 0 for the hand-drawn look it had)
+ *   success 'pieces'    the outline's own segments turn out, fly, spin, fall
+ *                       and fade, then the outline draws itself back
+ *   success 'ticks'     the segments turn out into ticks, hold, close again
+ *   uniformity          1 (default) every tooth, bump and piece alike; lower
+ *                       is more hand-drawn
+ *   soften              editing after an error drops the teeth but keeps
+ *                       the line red until it's valid (default false)
  */
 (function (global) {
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -40,7 +56,7 @@
     stiffness: 0.14, // how hard the state shapes pull toward their target
     damping: 0.18, // how fast they stop wobbling
 
-    typing: 'follow', // 'follow' | 'jiggle' | 'ripple'
+    typing: 'follow', // 'follow' | 'jiggle' | 'ripple' | 'wave' | 'cloud'
     followAmp: 4, // how far the border swells over the caret
     followWidth: 28, // how wide the swell is
     followKick: 5, // the extra nudge a keystroke gives it
@@ -48,25 +64,72 @@
     jiggleKick: 5,
     rippleAmp: 11,
     rippleSpeed: 320,
+    rippleWay: 'both', // ripple: 'both' ways from the caret; 'forward' is what typing 'wave' does
+    cloudSize: 34, // 'cloud': bump length
+    cloudAmp: 3.2, // bump height
+    cloudKick: 2.6, // added by each key
 
-    loading: 'wave', // 'wave' | 'spinner'
+    loading: 'wave', // 'wave' | 'spinner' | 'orbit'
     waveAmp: 10,
     waveLength: 52,
     waveSpeed: 150,
     spinLength: 0.035, // a share of the perimeter
     spinSpeed: 0.7, // laps a second
+    orbitPacket: 0.32, // 'orbit': share of the perimeter the wave covers
+    orbitLap: 1.15, // s per lap
 
-    error: 'jagged', // 'jagged' | 'pulse'
+    error: 'jagged', // 'jagged' | 'pulse' | 'spring' | 'drawn'
     jagAmp: 12,
     jagLength: 22,
     pulseAmp: 10,
     pulseRate: 1.4,
     shake: true,
+    springRate: 24, // 'spring': how fast the teeth spring out
+    springBounce: 0.32, // how far past their size (0 none)
+    soften: false, // editing after an error: teeth go, red stays till valid
+    drawnHit: 13, // 'drawn': tooth height as it lands
+    drawnRest: 6, // and once settled
+    drawnSettle: 0.7, // s to settle
 
-    success: 'both', // 'sunburst' | 'confetti' | 'both'
+    success: 'both', // 'sunburst' | 'confetti' | 'both' | 'pieces' | 'ticks'
     rayLength: 38,
     raySpacing: 22,
     confettiSpacing: 14,
+    pieceLength: 20, // 'pieces' and 'ticks': px of outline per piece
+    flyFar: 34, // 'pieces': px they travel
+    fall: 16, // px they drop
+    spin: 260, // degrees, at most
+    flyTime: 1.1, // s to gone
+    redrawAt: 0.95, // s after sent that the outline draws back
+    ticksHold: 0.9, // 'ticks': s held open
+    ticksDrift: 10, // px they move out
+
+    uniformity: 1, // 1 every tooth, bump and piece alike; 0 hand-drawn
+
+    handoff: 0.22, // s, roughly, for the last state's shape to spring away
+    handoffBounce: 0.3, // how far it overshoots on the way (0 none)
+    stateDelay: 0.08, // s beat before the new state starts
+    errorBounce: 7, // px the border swells out when an error lands, then springs back in (0 none)
+    settle: 0, // px the outline breathes out and back once it's whole again (0 none)
+  };
+
+  // A repeatable 0..1 per index, so each tooth and piece keeps its shape.
+  const rand = (i) => {
+    const x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const clamp01 = (k) => Math.min(1, Math.max(0, k));
+  // Around 1, spread by r as far as uniformity allows.
+  const varyBy = (u, r, spread) => 1 + (1 - clamp01(u)) * spread * (2 * r - 1);
+  const easeOut = (k) => 1 - Math.pow(1 - clamp01(k), 3);
+  const easeOut5 = (k) => 1 - Math.pow(1 - clamp01(k), 5);
+  const easeInOut = (k) => { k = clamp01(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+  // An underdamped spring from 0 to 1: it overshoots once and settles.
+  const springStep = (t, w, bounce) => {
+    if (t <= 0) return 0;
+    const z = 1 - bounce;
+    const wd = w * Math.sqrt(Math.max(0.0001, 1 - z * z));
+    return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w) / wd) * Math.sin(wd * t));
   };
 
   // Made on first use, so the file can be imported where there's no DOM.
@@ -172,7 +235,7 @@
     const bottomS = (x) => 2 * (W - 2 * R) + Math.PI * R + (H - 2 * R) - topS(x);
 
     const spring = () => ({ x: 0, v: 0, target: 0 });
-    const sp = { wave: spring(), jag: spring(), pulse: spring(), spin: spring() };
+    const sp = { wave: spring(), jag: spring(), pulse: spring(), spin: spring(), cloud: spring(), orbit: spring() };
     const jig = { x: 0, v: 0, n: 4, ph: 0 };
     const follow = { x: 0, target: 0, amp: 0, v: 0, on: false };
     const ripples = [];
@@ -181,6 +244,18 @@
     let state = 'rest';
     let focused = false;
     const t0 = performance.now();
+    let tNow = 0; // s, the last frame's time
+    let since = 0; // s, when the state last changed
+    let puff = 0; // 'cloud': a key's puff, eased away
+    let fixing = false; // soften: editing after an error, still invalid
+    let redrawTimer = 0; // the outline drawing back after a send
+    let hideTimer = 0; // the outline giving way to the pieces
+    let settleAt = -10; // s, when the outline last closed after a send
+    let redW = 0; // how red the line is, 0 to 1
+    let lastO = []; // the last frame's offset at each point
+    let hand = null; // { o, at }: the shape the last state left, easing away
+    let drawToken = 0; // which draw-back is current
+    const pieces = [];
     let running = true;
 
     const reps = (len) => Math.max(1, Math.round(P / len));
@@ -201,17 +276,55 @@
       if (Math.abs(jig.x) > 0.01) o += jig.x * Math.sin((2 * Math.PI * jig.n * s) / P + jig.ph);
       for (const r of ripples) {
         const age = t - r.t;
-        const d = dist(s, r.s) - age * p.rippleSpeed;
+        // Forward: only the front running right. Clockwise is right along
+        // the top and left along the bottom, so the bottom one runs back.
+        let far = dist(s, r.s);
+        if (p.rippleWay === 'forward' || p.typing === 'wave') {
+          const cw = (((s - r.s) % P) + P) % P;
+          far = r.dir > 0 ? cw : P - cw;
+        }
+        const d = far - age * p.rippleSpeed;
         o += p.rippleAmp * Math.exp(-age * 2.6) * Math.exp(-(d * d) / (2 * 16 * 16));
       }
       if (Math.abs(sp.wave.x) > 0.005) {
         const n = reps(p.waveLength);
         o += sp.wave.x * p.waveAmp * Math.sin((2 * Math.PI * n * (s - t * p.waveSpeed)) / P);
       }
-      if (Math.abs(sp.jag.x) > 0.005) {
+      if (Math.abs(sp.cloud.x) > 0.005) {
+        const n = Math.max(6, Math.round(P / p.cloudSize));
+        const u = ((s / P) * n + t * 0.08) % n;
+        const i = Math.floor(u), f = u - i;
+        const h = varyBy(p.uniformity, rand(i % n), 0.25);
+        o += sp.cloud.x * (p.cloudAmp + p.cloudKick * puff) * h * (1 - Math.pow(2 * f - 1, 2));
+      }
+      if (Math.abs(sp.orbit.x) > 0.005) {
+        const head = ((t / p.orbitLap) % 1) * P;
+        const d = dist(s, head);
+        const half = (P * p.orbitPacket) / 2;
+        const env = d < half ? 0.5 + 0.5 * Math.cos((Math.PI * d) / half) : 0;
+        o += sp.orbit.x * p.waveAmp * env * Math.sin((2 * Math.PI * (s - (t * P) / p.orbitLap * 0.25)) / p.waveLength);
+      }
+      const springing = state === 'error' && p.error === 'spring';
+      const drawn = state === 'error' && p.error === 'drawn';
+      if (Math.abs(sp.jag.x) > 0.005 || springing || drawn) {
+        // A tooth's height and where its tip sits vary with uniformity; at 1
+        // every tooth is the same, as it always was.
         const n = reps(p.jagLength);
-        const x = ((n * s) / P) % 1;
-        o += sp.jag.x * p.jagAmp * (1 - 4 * Math.abs(x - 0.5));
+        const u = (n * s) / P;
+        const i = Math.floor(u), x = u - i;
+        const h = varyBy(p.uniformity, rand(i + 17), 0.45);
+        const lean = 0.5 * varyBy(p.uniformity, rand(i + 5), 0.3);
+        const tri = (x < lean ? x / lean : (1 - x) / (1 - lean)) * 2 - 1;
+        if (drawn) {
+          // Grows in fast at full height, then eases down: one hit.
+          const a = t - since;
+          const amp = p.drawnHit + (p.drawnRest - p.drawnHit) * easeOut(a / p.drawnSettle);
+          // It lands on a spring: past full height, back, settled.
+          o += springStep(a, 30, 0.35) * amp * h * tri * 0.5;
+        } else {
+          const k = springing ? springStep(t - since, p.springRate, p.springBounce) : sp.jag.x;
+          o += k * p.jagAmp * h * tri;
+        }
       }
       if (Math.abs(sp.pulse.x) > 0.005) o += sp.pulse.x * p.pulseAmp * (0.5 - 0.5 * Math.cos(t * Math.PI * 2 * p.pulseRate));
       return o;
@@ -223,6 +336,9 @@
       const p = params;
       const still = reduced.matches;
       const t = still ? 0 : (now - t0) / 1000;
+      tNow = (now - t0) / 1000;
+      sp.cloud.target = p.typing === 'cloud' && focused && state === 'typing' ? 1 : 0;
+      puff *= 0.9;
       if (p.radius !== R && Math.min(p.radius, H / 2, W / 2) !== R) resize();
 
       for (const k in sp) {
@@ -244,22 +360,48 @@
       if (still) { jig.x = jig.v = 0; follow.amp = restAmp; follow.v = 0; follow.x = follow.target; ripples.length = 0; }
       for (let i = ripples.length - 1; i >= 0; i--) if (t - ripples[i].t > 1.4) ripples.splice(i, 1);
 
+      // The handover: the shape the last state left eases away as the new
+      // one comes in, so a change flows rather than cuts.
+      // On a spring, so it swings a touch past flat and settles.
+      const handA = hand ? t - hand.at : 0;
+      const handK = hand && !still ? 1 - springStep(handA, 4.2 / Math.max(0.05, p.handoff), p.handoffBounce) : 0;
+      if (hand && handA > p.handoff * 5) hand = null;
+      // Once the outline is whole after a send, it breathes out and back.
+      const sa = t - settleAt;
+      const settleO = sa >= 0 && sa < 1 && !still ? p.settle * Math.exp(-sa * 5) * Math.sin(sa * Math.PI * 2 * 2.2) : 0;
+      // The error's bounce: the border swells out, springs back a little
+      // past its size, and shrinks into the resting teeth.
+      const ea = t - since;
+      const bounceO = state === 'error' && p.errorBounce && ea >= 0 && ea < 1.2 && !still ? p.errorBounce * Math.exp(-ea * 5.5) * Math.sin(ea * Math.PI * 2 * 1.9) : 0;
       let d = '';
-      for (let s = 0; s < P; s += STEP) {
+      let idx = 0;
+      for (let s = 0; s < P; s += STEP, idx++) {
         const [x, y, nx, ny] = at(s);
-        const o = offset(s, t);
+        let o = offset(s, t);
+        if (hand) o += (hand.o[idx] || 0) * handK;
+        o += settleO + bounceO;
+        lastO[idx] = o;
         d += (d ? 'L' : 'M') + (x + nx * o + PAD).toFixed(1) + ' ' + (y + ny * o + PAD).toFixed(1);
       }
       d += 'Z';
       main.setAttribute('d', d);
       const pulseW = sp.pulse.x * 3 * (0.5 - 0.5 * Math.cos(t * Math.PI * 2 * p.pulseRate));
-      main.style.stroke = state === 'error' ? 'var(--bf-danger, #d43a3a)' : 'var(--bf-ink, currentColor)';
+      // The red blends in and out rather than switching.
+      const redGoal = state === 'error' || fixing ? 1 : 0;
+      redW += (redGoal - redW) * (still ? 1 : 0.22);
+      if (Math.abs(redGoal - redW) < 0.01) redW = redGoal;
+      main.style.stroke = redW >= 1 ? 'var(--bf-danger, #d43a3a)' : redW <= 0 ? 'var(--bf-ink, currentColor)'
+        : `color-mix(in srgb, var(--bf-danger, #d43a3a) ${(redW * 100).toFixed(1)}%, var(--bf-ink, currentColor))`;
       main.style.strokeWidth = p.stroke + Math.max(0, pulseW) + (focused ? p.focusStroke : 0);
       main.style.transition = 'stroke-width 0.15s ease';
       main.style.strokeDasharray = draw < 1 ? `${P * 1.2} ${P * 1.2}` : '';
       main.style.strokeDashoffset = draw < 1 ? P * 1.2 * (1 - draw) : '';
       const sw = Math.max(0, Math.min(1, sp.spin.x));
-      main.style.opacity = hidden ? 0 : 1 - 0.75 * sw;
+      const age = tNow - since;
+      const g = state === 'sent' && p.success === 'ticks' ? ticksOpen(age) : 0;
+      main.style.opacity = hidden || g > 0.001 ? 0 : 1 - 0.75 * sw;
+      drawPieces(state === 'sent' && p.success === 'pieces' && !still ? age : -1);
+      drawTicks(still ? 0 : g);
 
       // The spinner: overlapping dashes, each a little behind and fainter,
       // read as one bold stroke with a fading tail.
@@ -276,6 +418,78 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+
+    // 'pieces': the outline's segments stand out from the edge, then fly,
+    // spin, fall and fade. age < 0 hides them.
+    function drawPieces(age) {
+      const p = params;
+      const n = Math.round(P / p.pieceLength);
+      const live = age >= 0 && age < p.flyTime + 0.1;
+      if (!live && !pieces.length) return;
+      while (live && pieces.length < n) {
+        const l = document.createElementNS(SVGNS, 'line');
+        l.setAttribute('stroke-linecap', 'round');
+        fx.appendChild(l);
+        pieces.push(l);
+      }
+      const unit = P / n, u = p.uniformity;
+      for (let i = 0; i < pieces.length; i++) {
+        const l = pieces[i];
+        if (!live || i >= n) { l.style.opacity = 0; continue; }
+        const r1 = rand(i + 9), r2 = rand(i + 41), r3 = rand(i + 77);
+        const k = (age - 0.03 * (i % 4)) / p.flyTime;
+        const turn = springStep(k * p.flyTime, 24, 0.35); // stands out, a touch past, back
+        const fly = easeOut5(k);
+        const [x, y, nx, ny] = at((i + 0.5) * unit);
+        const tx = -ny, ty = nx;
+        const dir = (1 - u) * (2 * r3 - 1) + u * (i % 2 ? 0.5 : -0.5);
+        const ang = turn * (Math.PI / 2) * varyBy(u, r2, 0.1) + (fly * dir * p.spin * Math.PI) / 180;
+        const dx = tx * Math.cos(ang) + nx * Math.sin(ang), dy = ty * Math.cos(ang) + ny * Math.sin(ang);
+        const half = (unit / 2) * (1 - 0.45 * fly) * (i % 2 ? 0.8 : 1);
+        const out = fly * p.flyFar * varyBy(u, r1, 0.45) * (ny < -0.5 ? 0.12 : 1);
+        const drop = p.fall * Math.pow(clamp01(k), 2) * varyBy(u, r2, 0.4);
+        const cx = x + nx * out + PAD, cy = y + ny * out + drop + PAD;
+        l.setAttribute('x1', (cx - dx * half).toFixed(1)); l.setAttribute('y1', (cy - dy * half).toFixed(1));
+        l.setAttribute('x2', (cx + dx * half).toFixed(1)); l.setAttribute('y2', (cy + dy * half).toFixed(1));
+        l.style.stroke = 'var(--bf-ink, currentColor)';
+        l.style.strokeWidth = p.stroke;
+        l.style.opacity = (1 - clamp01((k - 0.45) / 0.55)).toFixed(3);
+      }
+      if (!live) { pieces.forEach((l) => l.remove()); pieces.length = 0; }
+    }
+
+    // 'ticks': open, hold, close. 0 is the outline, 1 all ticks.
+    function ticksOpen(a) {
+      const o = 0.45, h = params.ticksHold, c = 0.6;
+      return Math.max(0, a < o ? easeOut(a / o) : a < o + h ? 1 : 1 - easeInOut((a - o - h) / c));
+    }
+    let tickPath = null;
+    function drawTicks(g) {
+      if (g <= 0.001) { if (tickPath) tickPath.style.opacity = 0; return; }
+      const p = params;
+      if (!tickPath) {
+        tickPath = document.createElementNS(SVGNS, 'path');
+        tickPath.setAttribute('fill', 'none');
+        tickPath.setAttribute('stroke-linecap', 'round');
+        fx.appendChild(tickPath);
+      }
+      const n = Math.round(P / Math.max(8, p.pieceLength + 4)), unit = P / n, u = p.uniformity;
+      let d = '';
+      for (let i = 0; i < n; i++) {
+        const [x, y, nx, ny] = at((i + 0.5) * unit);
+        const tx = -ny, ty = nx;
+        const ang = g * (Math.PI / 2) * varyBy(u, rand(i + 41), 0.12);
+        const dx = tx * Math.cos(ang) + nx * Math.sin(ang), dy = ty * Math.cos(ang) + ny * Math.sin(ang);
+        const len = (unit * (1 - 0.5 * g) * (i % 2 ? 0.72 : 1) * (1 - 0.15 * g * (1 - u) * rand(i + 3))) / 2;
+        const out = g * p.ticksDrift * varyBy(u, rand(i + 9), 0.4) + g * len;
+        const cx = x + nx * out + PAD, cy = y + ny * out + PAD;
+        d += `M${(cx - dx * len).toFixed(1)} ${(cy - dy * len).toFixed(1)}L${(cx + dx * len).toFixed(1)} ${(cy + dy * len).toFixed(1)}`;
+      }
+      tickPath.setAttribute('d', d);
+      tickPath.style.stroke = 'var(--bf-ink, currentColor)';
+      tickPath.style.strokeWidth = p.stroke;
+      tickPath.style.opacity = 1;
+    }
 
     function line(x1, y1, x2, y2, colour, width) {
       const l = document.createElementNS(SVGNS, 'line');
@@ -334,7 +548,7 @@
           { duration: 1100 + Math.random() * 500, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)', fill: 'forwards' },
         ).onfinish = () => l.remove();
       }
-      setTimeout(redraw, reduced.matches ? 300 : 1100);
+      redrawTimer = setTimeout(redraw, reduced.matches ? 300 : 1100);
     }
 
     // Draws the outline back in, from nothing to closed.
@@ -342,11 +556,15 @@
       hidden = false;
       if (reduced.matches) { draw = 1; return; }
       const start = performance.now();
+      const token = ++drawToken;
       draw = 0;
       const tick = (now) => {
-        const k = Math.min(1, (now - start) / 650);
-        draw = 1 - Math.pow(1 - k, 3);
+        if (token !== drawToken) return; // a newer state took over
+        // Eases in and out: it gathers, draws, and settles closed.
+        const k = Math.min(1, (now - start) / 750);
+        draw = easeInOut(k);
         if (k < 1) requestAnimationFrame(tick);
+        else settleAt = (now - t0) / 1000;
       };
       requestAnimationFrame(tick);
     }
@@ -366,11 +584,12 @@
       },
       key(x) {
         const p = params;
+        puff = 1;
         if (x != null) api.caret(x);
         if (p.typing === 'follow') follow.v += p.followKick * 0.35;
-        else if (p.typing === 'ripple') {
+        else if (p.typing === 'ripple' || p.typing === 'wave') {
           const now = (performance.now() - t0) / 1000;
-          ripples.push({ s: topS(follow.target), t: now }, { s: bottomS(follow.target), t: now });
+          ripples.push({ s: topS(follow.target), t: now, dir: 1 }, { s: bottomS(follow.target), t: now, dir: -1 });
           if (ripples.length > 24) ripples.splice(0, 2);
         } else {
           jig.v += p.jiggleKick + Math.random() * 1.5;
@@ -378,17 +597,44 @@
         }
       },
       focus(on) { focused = on; },
+      valid() { fixing = false; },
+      // Draw the outline in from nothing, as it does after a send.
+      drawIn() { hidden = true; redraw(); },
       set(st) {
         const p = params;
+        fixing = p.soften && (state === 'error' || fixing) && st === 'typing';
+        // A new state waits a beat (stateDelay) before it starts.
+        since = tNow + (st !== state ? p.stateDelay : 0);
+        // Each state starts clean, so two never play on top of each other:
+        // what the last one left moving stops, and the outline is whole.
+        if (st !== state) {
+          hand = { o: lastO.slice(), at: tNow };
+          for (const k in sp) { sp[k].x = 0; sp[k].v = 0; }
+          if (st !== 'typing') { ripples.length = 0; follow.amp = 0; follow.v = 0; jig.x = 0; jig.v = 0; puff = 0; }
+          clearTimeout(redrawTimer);
+          clearTimeout(hideTimer);
+          drawToken++;
+          draw = 1;
+          hidden = false;
+          [...fx.children].forEach((el) => { if (el !== tickPath && !pieces.includes(el)) el.remove(); });
+          root.classList.remove('is-shaking', 'is-popping');
+        }
         state = st;
         root.dataset.state = st;
         sp.wave.target = st === 'loading' && p.loading === 'wave' ? 1 : 0;
+        sp.orbit.target = st === 'loading' && p.loading === 'orbit' ? 1 : 0;
         sp.spin.target = st === 'loading' && p.loading === 'spinner' ? 1 : 0;
         sp.jag.target = st === 'error' && p.error === 'jagged' ? 1 : 0;
         sp.pulse.target = st === 'error' && p.error === 'pulse' ? 1 : 0;
         if (st === 'error' && p.error === 'jagged') { sp.jag.v += 0.25; if (p.shake) pulseClass('is-shaking', 600); }
         if (st === 'error' && p.error === 'pulse') sp.pulse.v += 0.2;
-        if (st === 'sent') {
+        if (st === 'error' && (p.error === 'spring' || p.error === 'drawn') && p.shake) pulseClass('is-shaking', 600);
+        if (st === 'sent' && p.success === 'pieces') {
+          // The outline gives way to its pieces once the beat is over.
+          const beat = p.stateDelay * 1000;
+          hideTimer = setTimeout(() => { if (state === 'sent') { hidden = true; hand = null; } }, beat);
+          redrawTimer = setTimeout(() => { if (state === 'sent' || hidden) redraw(); }, reduced.matches ? 300 : beat + p.redrawAt * 1000);
+        } else if (st === 'sent' && p.success !== 'ticks') {
           pulseClass('is-popping', 600);
           if (p.success !== 'confetti') sunburst();
           if (p.success !== 'sunburst') confetti();
@@ -435,7 +681,8 @@
     const caret = () => { if (document.activeElement === input) field.caret(caretX(input, box)); };
     const fromValue = () => {
       if (busy || field.state === 'sent') return;
-      if (field.state === 'error' && !input.checkValidity() && input.value) return;
+      if (field.state === 'error' && !input.checkValidity() && input.value && !field.params.soften) return;
+      if (input.checkValidity()) field.valid();
       if (field.state === 'error') { input.removeAttribute('aria-invalid'); say(''); }
       field.set(input.value ? 'typing' : 'rest');
     };
