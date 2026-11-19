@@ -96,9 +96,12 @@ export const StatelineField = forwardRef(function StatelineField(props, ref) {
         'aria-label': arrow ? buttonLabel : undefined,
       }, arrow ? ARROW : buttonLabel),
     ),
-    // Stateline writes the messages here, so React never renders into it.
-    h('p', { ref: message, id: `${id}-msg`, className: 'stateline-field__message', role: 'status', 'aria-live': 'polite', suppressHydrationWarning: true }),
-    hint ? h('p', { className: 'stateline-field__hint' }, hint) : null,
+    // Messages and the hint share one line; a message hides the hint while
+    // it shows. Stateline writes the messages, so React never renders into it.
+    h('div', { className: 'stateline-field__help' },
+      h('div', { ref: message, id: `${id}-msg`, className: 'stateline-field__message', role: 'status', 'aria-live': 'polite', suppressHydrationWarning: true }),
+      hint ? h('div', { className: 'stateline-field__hint' }, hint) : null,
+    ),
   );
 });
 

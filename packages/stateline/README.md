@@ -8,6 +8,8 @@ Every element enhances a real one. The native input stays in the page, so keyboa
 
 It came out of an essay, [Make it pop](https://ramphal.design/doc/make-it-pop), about what that note from a client actually asks for. You can try every setting in the [sandbox](https://ramphal.design/lab/field).
 
+**Try it:** the [Storybook docs](https://ramphal.design/storybook/?path=/docs/stateline-npm-field--docs) use the published Vue component with a control for every prop, and the [CodePen starter](https://ramphal.design/lab/stateline/pen.html) opens a pen that loads this package from npm.
+
 ## Install
 
 ```bash
@@ -187,7 +189,10 @@ The components render this markup. Write it yourself, call `Stateline.addStyles(
     <input class="stateline-field__input" id="email" type="email" required aria-describedby="email-msg" />
     <button class="stateline-field__send" type="submit">Subscribe</button>
   </div>
-  <p class="stateline-field__message" id="email-msg" role="status" aria-live="polite"></p>
+  <div class="stateline-field__help">
+    <div class="stateline-field__message" id="email-msg" role="status" aria-live="polite"></div>
+    <div class="stateline-field__hint">New essays by email. Unsubscribe anytime.</div>
+  </div>
 </form>
 ```
 

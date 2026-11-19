@@ -104,9 +104,12 @@ export const StatelineField = defineComponent({
           'aria-label': props.arrow ? props.buttonLabel : undefined,
         }, props.arrow ? [ARROW()] : props.buttonLabel),
       ]),
-      // Stateline writes the messages here; Vue leaves it alone.
-      h('p', { ref: message, id: `${id}-msg`, class: 'stateline-field__message', role: 'status', 'aria-live': 'polite' }),
-      props.hint ? h('p', { class: 'stateline-field__hint' }, props.hint) : null,
+      // Messages and the hint share one line; a message hides the hint
+      // while it shows. Stateline writes the messages; Vue leaves them alone.
+      h('div', { class: 'stateline-field__help' }, [
+        h('div', { ref: message, id: `${id}-msg`, class: 'stateline-field__message', role: 'status', 'aria-live': 'polite' }),
+        props.hint ? h('div', { class: 'stateline-field__hint' }, props.hint) : null,
+      ]),
     ]);
   },
 });

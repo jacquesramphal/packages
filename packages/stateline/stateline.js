@@ -157,17 +157,30 @@
   // ---------- styles: the essay's look for the ready-made markup ----------
   // Used by the Vue and React components, and by addStyles() for plain HTML
   // that uses the same class names. :where() keeps it easy to override.
-  const FIELD_CSS = ':where(.stateline-field){display:grid;gap:8px;--bf-ink:currentColor;--bf-danger:var(--stateline-danger,#e74646)}'
-    + ':where(.stateline-field__label){font-weight:500}'
-    + ':where(.stateline-box){display:flex;align-items:center;gap:8px;min-height:56px;padding:0 8px 0 16px;border:2px solid currentColor;border-radius:8px}'
+  // Measured from the site's subscribe form, so the npm field matches it:
+  // label 20px above the box, a 57px box with the text 20px in, and the
+  // hint 23px below in a softer, smaller ink. Messages share the hint's
+  // line and replace it while they show, so nothing jumps.
+  const FIELD_CSS = ':where(.stateline-field){display:grid;--bf-ink:currentColor;--bf-danger:var(--stateline-danger,#e74646)}'
+    + ':where(.stateline-field__label){margin:0 0 20px;opacity:.88}'
+    + ':where(.stateline-box){box-sizing:border-box;display:flex;align-items:center;gap:8px;min-height:57px;padding:0 12px 0 20px;border:2px solid currentColor;border-radius:8px}'
     + '.stateline-field.bf-ready .stateline-box{border-color:transparent}'
-    + ':where(.stateline-field__input){flex:1;min-width:0;font:inherit;color:inherit;background:transparent;border:0;outline:0;padding:12px 0}'
-    + ':where(.stateline-field__send){display:grid;place-items:center;min-width:40px;height:40px;padding:0 8px;font:inherit;font-weight:500;color:inherit;background:none;border:0;border-radius:8px;cursor:pointer}'
+    // Portable: the parts that make the look are guarded against a page's
+    // own form styles. Pages commonly set input:focus { outline },
+    // input:required:valid { background } and p { color !important }. The
+    // input's reset uses !important, and the message and hint are divs, not
+    // paragraphs, so a page's paragraph rules never reach them.
+    + '.stateline-field .stateline-field__input{flex:1;min-width:0;font:inherit;color:inherit;padding:12px 0;margin:0;min-height:0;height:auto;inline-size:auto;'
+    + 'background:transparent!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important}'
+    + '.stateline-field .stateline-field__input::placeholder{color:currentColor;opacity:.55}'
+    + ':where(.stateline-field__send){display:grid;place-items:center;flex:none;min-width:38px;height:38px;padding:0 8px;font:inherit;font-weight:500;color:inherit;background:none;border:0;border-radius:8px;cursor:pointer}'
     + ':where(.stateline-field__send) svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}'
     + ':where(.stateline-field__send):focus-visible{outline:2px solid currentColor}'
-    + ':where(.stateline-field__message){min-height:1.5em;margin:0}'
-    + ':where(.stateline-field__message)[data-state=error]{color:var(--stateline-danger,#e74646)}'
-    + ':where(.stateline-field__hint){margin:0;opacity:.72;font-size:.9em}'
+    + ':where(.stateline-field__help){display:grid;margin:23px 0 0;min-height:1.15em}'
+    + '.stateline-field .stateline-field__message,.stateline-field .stateline-field__hint{grid-area:1/1;margin:0;font-size:.82em;line-height:1.4;color:inherit;opacity:1}'
+    + '.stateline-field .stateline-field__hint{opacity:.75}'
+    + '.stateline-field .stateline-field__help:has(.stateline-field__message:not(:empty)) .stateline-field__hint{visibility:hidden}'
+    + '.stateline-field .stateline-field__message[data-state=error]{color:var(--stateline-danger,#e74646)}'
     + ':where(.stateline-check){display:inline-flex;gap:12px;align-items:center;cursor:pointer}';
   let fieldCssAdded = false;
   function addStyles() {
