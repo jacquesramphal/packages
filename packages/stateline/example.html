@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Make it pop playground</title>
+<title>Stateline playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
 <style>
@@ -35,7 +35,7 @@
   h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 8px; font-weight: 500; text-wrap: balance; }
   header p { margin: 0; color: var(--muted); max-width: 60ch; }
 
-  form { display: grid; gap: 28px; --bf-ink: var(--ink); --bf-danger: var(--danger); --pop-danger: var(--danger); }
+  form { display: grid; gap: 28px; --bf-ink: var(--ink); --bf-danger: var(--danger); --stateline-danger: var(--danger); }
   .group { display: grid; gap: 12px; }
   .group > span, legend { font-weight: 500; padding: 0; }
   fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
@@ -49,8 +49,6 @@
   .send:focus-visible { outline: 2px solid currentColor; }
   .msg { min-height: 1.5em; margin: 0; }
   .msg[data-state=error] { color: var(--danger); }
-  .msg button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: var(--line); text-underline-offset: 0.2em; }
-  .msg button strong { font-weight: 700; }
 
   .check { display: flex; gap: 12px; align-items: center; cursor: pointer; width: fit-content; }
   .check.is-required { margin-top: 4px; }
@@ -61,7 +59,7 @@
 <body>
 <main>
   <header>
-    <h1>Make it pop playground</h1>
+    <h1>Stateline playground</h1>
     <p>The real package code: the border field, "did you mean" on send, and the first checkbox. Try <em>you@gmial.com</em>, or send without ticking the last box. Nothing is sent anywhere.</p>
   </header>
 
@@ -77,57 +75,38 @@
 
     <fieldset>
       <legend>Send me</legend>
-      <label class="check" for="t-essays"><input id="t-essays" name="topics" value="essays" type="checkbox" data-pop checked /> Essays</label>
-      <label class="check" for="t-labs"><input id="t-labs" name="topics" value="labs" type="checkbox" data-pop /> Lab experiments</label>
-      <label class="check" for="t-talks"><input id="t-talks" name="topics" value="talks" type="checkbox" data-pop /> Talks</label>
-      <label class="check is-required" for="human"><input id="human" name="human" type="checkbox" data-pop required /> I'm a person, not a bot</label>
+      <label class="check" for="t-essays"><input id="t-essays" name="topics" value="essays" type="checkbox" data-stateline checked /> Essays</label>
+      <label class="check" for="t-labs"><input id="t-labs" name="topics" value="labs" type="checkbox" data-stateline /> Lab experiments</label>
+      <label class="check" for="t-talks"><input id="t-talks" name="topics" value="talks" type="checkbox" data-stateline /> Talks</label>
+      <label class="check is-required" for="human"><input id="human" name="human" type="checkbox" data-stateline required /> I'm a person, not a bot</label>
     </fieldset>
   </form>
 
-  <p class="note">Draft 0.0.1 of <strong>make-it-pop</strong>. Each element enhances a real one, so the form still works with the script taken away.</p>
+  <p class="note"><strong>Stateline</strong> by Jacques Ramphal, from the essay <a href="https://ramphal.design/doc/make-it-pop">Make it pop</a>. Each element enhances a real one, so the form still works with the script taken away.</p>
 </main>
 
 <script src="../border-field/border-field.js"></script>
-<script src="make-it-pop.js"></script>
+<script src="stateline.js"></script>
 <script>
   (function () {
     const form = document.getElementById('signup');
-    const input = document.getElementById('email');
     const msg = document.getElementById('email-msg');
-    const boxes = MakeItPop.enhance(form);
+    const boxes = Stateline.enhance(form);
     const human = boxes.find((b) => b.input.id === 'human');
-    let offered = '';
 
-    // Before the field's own submit: a required box left empty, and a
-    // likely typo, each stop the send with their own state.
+    // A required box left empty stops the send with its own state. Added
+    // before field() so it runs before the field's own submit.
     form.addEventListener('submit', (e) => {
-      if (!human.input.checked) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        human.set('error');
-        msg.textContent = 'Tick the last box first.'; msg.dataset.state = 'error';
-        return;
-      }
-      const s = input.checkValidity() && MakeItPop.suggestEmail(input.value);
-      if (s && offered !== input.value.toLowerCase()) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        offered = input.value.toLowerCase();
-        msg.dataset.state = '';
-        msg.innerHTML = '';
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.innerHTML = s.local + '@<strong>' + s.domain + '</strong>';
-        b.addEventListener('click', () => { input.value = s.address; offered = ''; msg.textContent = ''; field.field.valid(); field.field.key(); input.focus(); });
-        msg.append('Did you mean ', b, '?');
-        field.field.key();
-        return;
-      }
+      if (human.input.checked) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      human.set('error');
+      msg.textContent = 'Tick the last box first.'; msg.dataset.state = 'error';
     }, true);
-    input.addEventListener('input', () => { if (offered && input.value.toLowerCase() !== offered) { offered = ''; msg.textContent = ''; } });
 
-    const field = MakeItPop.field(form, {
-      input, box: form.querySelector('.box'), message: msg,
-      typing: 'follow', error: 'drawn', uniformity: 0, jagLength: 18, drawnHit: 9, drawnRest: 4.5, soften: true, shake: false, errorBounce: 7,
-      loading: 'orbit', waveAmp: 6, waveLength: 22, success: 'pieces', stroke: 2, radius: 8, focusStroke: 0,
+    // The essay's look and "did you mean" are the defaults; only the send
+    // and the wording are this page's.
+    Stateline.field(form, {
+      box: form.querySelector('.box'), message: msg,
       onSubmit: () => new Promise((resolve) => setTimeout(resolve, 1400)),
       messages: { sent: 'Almost there. Check your inbox to confirm.', empty: 'Add your email address first.', invalid: 'Please enter a valid email address.' },
     });

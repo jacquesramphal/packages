@@ -3,6 +3,18 @@
   "version": "0.2.0",
   "description": "An input whose outline is its state: it follows the caret while you type, waves while it sends, goes jagged when it's wrong, and bursts when it's sent. A real form underneath, no dependencies.",
   "license": "MIT",
+  "author": {
+    "name": "Jacques Ramphal",
+    "url": "https://ramphal.design"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/jacquesramphal.github.io.git",
+    "directory": "packages/border-field"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/jacquesramphal.github.io/issues"
+  },
   "private": false,
   "main": "./border-field.js",
   "types": "./border-field.d.ts",
@@ -19,7 +31,8 @@
     "border-field.js",
     "border-field.d.ts",
     "example.html",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=18"

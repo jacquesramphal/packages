@@ -1,0 +1,90 @@
+{
+  "name": "@jacquesramphal/stateline",
+  "version": "0.1.0",
+  "description": "Form fields whose border is their state, by Jacques Ramphal. The outline follows the caret, goes jagged when the input is wrong, circles while it sends and flies apart when it is sent. Plus a checkbox that draws its tick and \"did you mean\" on send. Each one enhances a real element, so the form still works without the script.",
+  "license": "MIT",
+  "author": {
+    "name": "Jacques Ramphal",
+    "url": "https://ramphal.design"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/jacquesramphal.github.io.git",
+    "directory": "packages/stateline"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/jacquesramphal.github.io/issues"
+  },
+  "homepage": "https://ramphal.design/doc/make-it-pop",
+  "private": false,
+  "main": "./stateline.js",
+  "types": "./stateline.d.ts",
+  "unpkg": "./stateline.js",
+  "jsdelivr": "./stateline.js",
+  "exports": {
+    ".": {
+      "types": "./stateline.d.ts",
+      "default": "./stateline.js"
+    },
+    "./vue": {
+      "types": "./vue.d.ts",
+      "default": "./vue.mjs"
+    },
+    "./react": {
+      "types": "./react.d.ts",
+      "default": "./react.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "stateline.js",
+    "stateline.d.ts",
+    "vue.mjs",
+    "vue.d.ts",
+    "react.mjs",
+    "react.d.ts",
+    "example.html",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@jacquesramphal/border-field": "workspace:^"
+  },
+  "peerDependencies": {
+    "react": ">=17",
+    "vue": ">=3.2"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "stateline",
+    "form",
+    "input",
+    "border",
+    "outline",
+    "checkbox",
+    "email",
+    "did-you-mean",
+    "typo",
+    "animation",
+    "micro-interaction",
+    "svg",
+    "accessible",
+    "progressive-enhancement",
+    "vue",
+    "react"
+  ]
+}
