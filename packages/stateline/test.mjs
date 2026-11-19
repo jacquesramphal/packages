@@ -54,6 +54,22 @@ ok('every file in exports is published', () => {
   }
 });
 
+ok('options.json lists every engine option once, defaults inside their ranges', () => {
+  const BorderField = require('@jacquesramphal/border-field');
+  const { groups } = JSON.parse(readFileSync(new URL('./options.json', import.meta.url)));
+  const list = groups.flatMap((g) => g.options);
+  const keys = list.map((o) => o.key);
+  assert.deepEqual([...keys].sort(), Object.keys(BorderField.DEFAULTS).sort());
+  for (const o of list) {
+    for (const v of [BorderField.DEFAULTS[o.key], Stateline.DEFAULTS[o.key]]) {
+      if (v === undefined) continue;
+      if (o.range) assert.ok(v >= o.range[0] && v <= o.range[1], `${o.key}=${v} outside ${o.range}`);
+      if (o.choices) assert.ok(o.choices.includes(v), `${o.key}=${v} not in choices`);
+      if (o.bool) assert.equal(typeof v, 'boolean', o.key);
+    }
+  }
+});
+
 const vue = await import('./vue.mjs').catch((e) => e);
 ok('vue entry loads', () => { assert.ok(vue.StatelineField && vue.StatelineCheckbox, vue.message); });
 const react = await import('./react.mjs').catch((e) => e);

@@ -1,0 +1,72 @@
+{
+  "$comment": "Every option the field takes, grouped as the field lab groups them. The README table and the Storybook controls are built from this file; pnpm stateline:test fails if an engine option is missing. Ranges are the field lab's.",
+  "groups": [
+    { "name": "Typing", "options": [
+      { "key": "typing", "label": "Style", "choices": ["follow", "jiggle", "ripple", "wave", "cloud"], "about": "What the line does as you type. follow: a swell rides the caret. wave: a ripple that runs forward. cloud: bumps all round." },
+      { "key": "followAmp", "label": "Swell", "range": [0, 14, 0.5], "about": "Height of the swell over the caret, px." },
+      { "key": "followWidth", "label": "Swell width", "range": [8, 80, 1], "about": "Width of the swell, px." },
+      { "key": "followKick", "label": "Key nudge", "range": [0, 20, 0.5], "about": "Extra push each keystroke gives the swell, px." },
+      { "key": "followEase", "label": "Catch-up", "range": [0.03, 1, 0.01], "about": "How quickly the swell catches the caret. 1 is instant." },
+      { "key": "jiggleKick", "label": "Jiggle", "range": [0, 14, 0.5], "about": "jiggle: how hard each keystroke shakes the line, px." },
+      { "key": "rippleAmp", "label": "Ripple size", "range": [0, 24, 0.5], "about": "ripple and wave: height of each ripple, px." },
+      { "key": "rippleSpeed", "label": "Ripple speed", "range": [60, 900, 10], "about": "ripple and wave: how fast ripples travel, px/s." },
+      { "key": "rippleWay", "label": "Ripple direction", "choices": ["both", "forward"], "about": "ripple: spread both ways from the caret, or only forward (what wave does)." },
+      { "key": "cloudSize", "label": "Cloud bump size", "range": [10, 80, 1], "about": "cloud: width of each bump, px." },
+      { "key": "cloudAmp", "label": "Cloud height", "range": [0, 10, 0.1], "about": "cloud: height of the bumps at rest, px." },
+      { "key": "cloudKick", "label": "Cloud nudge", "range": [0, 10, 0.1], "about": "cloud: extra puff each keystroke gives, px." }
+    ]},
+    { "name": "Sending", "options": [
+      { "key": "loading", "label": "Style", "choices": ["orbit", "wave", "spinner"], "about": "What the line does while it sends. orbit: one wave circles the field." },
+      { "key": "waveAmp", "label": "Wave height", "range": [0, 24, 0.5], "about": "Height of the sending wave, px." },
+      { "key": "waveLength", "label": "Wavelength", "range": [12, 160, 1], "about": "Length of one wave, px." },
+      { "key": "waveSpeed", "label": "Wave speed", "range": [0, 600, 5], "about": "wave: how fast it travels, px/s." },
+      { "key": "orbitPacket", "label": "Orbit length", "range": [0.05, 1, 0.01], "about": "orbit: share of the outline the wave covers, 0 to 1." },
+      { "key": "orbitLap", "label": "Orbit lap (s)", "range": [0.3, 4, 0.05], "about": "orbit: seconds per lap." },
+      { "key": "spinLength", "label": "Spinner length", "range": [0.01, 0.15, 0.005], "about": "spinner: share of the outline the stroke covers." },
+      { "key": "spinSpeed", "label": "Spinner laps/s", "range": [0.1, 2.5, 0.05], "about": "spinner: laps a second." }
+    ]},
+    { "name": "Error", "options": [
+      { "key": "error", "label": "Style", "choices": ["drawn", "jagged", "spring", "pulse"], "about": "How a wrong value lands. drawn: a hand-drawn jag that hits and settles smaller. spring: overshoots and settles." },
+      { "key": "jagAmp", "label": "Teeth size", "range": [0, 24, 0.5], "about": "jagged and spring: height of the teeth, px." },
+      { "key": "jagLength", "label": "Teeth spacing", "range": [6, 80, 1], "about": "Distance between teeth, px." },
+      { "key": "drawnHit", "label": "Drawn hit", "range": [0, 24, 0.5], "about": "drawn: teeth height as the error lands, px." },
+      { "key": "drawnRest", "label": "Drawn settled", "range": [0, 16, 0.5], "about": "drawn: teeth height once it settles, px." },
+      { "key": "drawnSettle", "label": "Drawn settle (s)", "range": [0.1, 2, 0.05], "about": "drawn: seconds from hit to settled." },
+      { "key": "springRate", "label": "Spring rate", "range": [4, 60, 1], "about": "spring: how fast the teeth spring." },
+      { "key": "springBounce", "label": "Spring bounce", "range": [0, 0.9, 0.01], "about": "spring: how much they overshoot." },
+      { "key": "pulseAmp", "label": "Pulse size", "range": [0, 24, 0.5], "about": "pulse: how far the line pulses out, px." },
+      { "key": "pulseRate", "label": "Pulses/s", "range": [0.2, 5, 0.1], "about": "pulse: pulses a second." },
+      { "key": "errorBounce", "label": "Error swell", "range": [0, 20, 0.5], "about": "How far the whole border swells when an error lands, then springs back, px." },
+      { "key": "soften", "label": "Soften on edit", "bool": true, "about": "Editing after an error drops the teeth but keeps the line red until the value is valid." },
+      { "key": "shake", "label": "Shake", "bool": true, "about": "Shake the form when an error lands." }
+    ]},
+    { "name": "Sent", "options": [
+      { "key": "success", "label": "Style", "choices": ["pieces", "ticks", "both", "sunburst", "confetti"], "about": "What happens once it's sent. pieces: the outline flies apart and draws back. ticks: it turns into ticks and closes. both: sunburst and confetti." },
+      { "key": "pieceLength", "label": "Piece length", "range": [8, 50, 1], "about": "pieces: length of each piece, px." },
+      { "key": "flyFar", "label": "Pieces fly", "range": [0, 90, 1], "about": "pieces: how far they fly out, px." },
+      { "key": "fall", "label": "Pieces fall", "range": [0, 60, 1], "about": "pieces: how far they drop, px." },
+      { "key": "spin", "label": "Pieces spin", "range": [0, 720, 10], "about": "pieces: degrees each one turns." },
+      { "key": "flyTime", "label": "Pieces time (s)", "range": [0.4, 2.5, 0.05], "about": "pieces: seconds in the air." },
+      { "key": "redrawAt", "label": "Redraw at (s)", "range": [0.3, 2.5, 0.05], "about": "pieces: when the outline starts drawing back." },
+      { "key": "ticksHold", "label": "Ticks hold (s)", "range": [0.2, 3, 0.05], "about": "ticks: seconds the ticks hold before closing." },
+      { "key": "ticksDrift", "label": "Ticks drift", "range": [0, 30, 1], "about": "ticks: how far they drift, px." },
+      { "key": "rayLength", "label": "Ray length", "range": [6, 90, 1], "about": "sunburst: length of each ray, px." },
+      { "key": "raySpacing", "label": "Ray spacing", "range": [8, 80, 1], "about": "sunburst: distance between rays, px." },
+      { "key": "confettiSpacing", "label": "Confetti spacing", "range": [6, 60, 1], "about": "confetti: distance between pieces, px." },
+      { "key": "settle", "label": "Settle", "range": [0, 8, 0.25], "about": "How far the outline breathes out and back once it's whole again, px." }
+    ]},
+    { "name": "The line", "options": [
+      { "key": "stroke", "label": "Stroke", "range": [1, 8, 0.5], "about": "Line width, px." },
+      { "key": "radius", "label": "Corner radius", "range": [0, 34, 1], "about": "Corner radius, px." },
+      { "key": "focusStroke", "label": "Focus stroke", "range": [0, 4, 0.25], "about": "Added to the line width while the field has focus, px. 0 turns it off." },
+      { "key": "uniformity", "label": "Uniformity", "range": [0, 1, 0.05], "about": "1: every tooth, bump and piece alike. 0: hand-drawn." }
+    ]},
+    { "name": "Transitions", "options": [
+      { "key": "handoff", "label": "Handover (s)", "range": [0, 0.8, 0.02], "about": "Roughly how long the last state's shape takes to spring away." },
+      { "key": "handoffBounce", "label": "Handover bounce", "range": [0, 0.8, 0.02], "about": "How much it overshoots on the way out." },
+      { "key": "stateDelay", "label": "Beat (s)", "range": [0, 0.4, 0.01], "about": "A beat before a new state starts." },
+      { "key": "stiffness", "label": "Stiffness", "range": [0.02, 0.5, 0.01], "about": "How hard the state shapes pull toward their target." },
+      { "key": "damping", "label": "Damping", "range": [0.02, 0.6, 0.01], "about": "How quickly they stop wobbling." }
+    ]}
+  ]
+}

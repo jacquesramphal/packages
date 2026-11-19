@@ -1,6 +1,6 @@
 {
   "name": "@jacquesramphal/stateline",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Form fields whose border is their state, by Jacques Ramphal. The outline follows the caret, goes jagged when the input is wrong, circles while it sends and flies apart when it is sent. Plus a checkbox that draws its tick and \"did you mean\" on send. Each one enhances a real element, so the form still works without the script.",
   "license": "MIT",
   "author": {
@@ -34,7 +34,8 @@
       "types": "./react.d.ts",
       "default": "./react.mjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./options.json": "./options.json"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -43,6 +44,7 @@
   "files": [
     "stateline.js",
     "stateline.d.ts",
+    "options.json",
     "vue.mjs",
     "vue.d.ts",
     "react.mjs",
