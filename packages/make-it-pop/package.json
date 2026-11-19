@@ -5,9 +5,17 @@
   "license": "MIT",
   "private": true,
   "main": "./make-it-pop.js",
-  "files": ["make-it-pop.js", "README.md"],
-  "peerDependencies": {
-    "@jacquesramphal/border-field": "^0.2.0"
-  },
-  "keywords": ["form", "input", "checkbox", "animation", "validation", "accessible", "progressive-enhancement"]
+  "files": [
+    "make-it-pop.js",
+    "README.md"
+  ],
+  "keywords": [
+    "form",
+    "input",
+    "checkbox",
+    "animation",
+    "validation",
+    "accessible",
+    "progressive-enhancement"
+  ]
 }
