@@ -401,7 +401,7 @@
         return Array.from({ length: count(7, o) }, (_, i) => {
           const z = size(), dir = i % 2 ? 1 : -1;
           // Half lean each way so they cross; centres sit inside the box.
-          return { x: x0 + (x1 - x0) * (0.12 + rand() * 0.8), y: 0.15 + rand() * 0.7, a: dir * (0.55 + rand() * 0.4), inset: o.bleed ? 4 + rand() * o.bleed * 0.85 : 0,
+          return { x: x0 + (x1 - x0) * (0.12 + rand() * 0.8), y: 0.15 + rand() * 0.7, a: dir * (0.55 + rand() * 0.4), out: rand() * 0.85,
             len: (0.45 + rand() * 0.7) * Math.hypot(W, H) * 0.55 * o.scale, amp: (4 + rand() * 5) * z.h, wl: ((15 + rand() * 12) * z.w) / o.frequency,
             env: [rand() * 6, rand() * 6, 1.5 + rand() * 2], sp: (0.6 + rand() * 0.8) * (rand() < 0.5 ? -1 : 1), drift: rand() * 6 };
         });
@@ -410,9 +410,14 @@
         const a = l.a + Math.sin(t * 0.07 + l.drift) * 0.05, ca = Math.cos(a), sa = Math.sin(a);
         const cx = l.x * W + Math.sin(t * 0.05 + l.drift) * 10, cy = l.y * H;
         p.beginPath(); p.lineWidth = 1;
-        // With bleed, each line stops its own distance short of the canvas
-        // edge, so the ends land just past the card at varied points.
-        const m = l.inset, inBox = (x, y) => !m || (x > m && y > m && x < W - m && y < H - m);
+        // With bleed, each line stops its own distance past the element's
+        // edge, so the ends land just outside at varied points. A side with
+        // less room (the edge of the screen) gets a shorter bleed.
+        const b = o._bleed, B = o.bleed || 0;
+        const e = b ? [b.l, b.t, W - b.r, H - b.b] : [0, 0, W, H], g = l.out * B;
+        const lo = (v, room) => v - Math.min(g, Math.max(0, room - 3));
+        const L = lo(e[0], e[0]), T = lo(e[1], e[1]), R = W - lo(W - e[2], W - e[2]), Bm = H - lo(H - e[3], H - e[3]);
+        const inBox = (x, y) => x > L && y > T && x < R && y < Bm;
         let drawn = false;
         for (let d = -l.len / 2; d <= l.len / 2; d += 3) {
           const u = d / l.len + 0.5;
@@ -614,8 +619,7 @@
     if (!(el instanceof HTMLCanvasElement)) {
       canvas = document.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
-      const b = -(o.bleed || 0);
-      canvas.style.cssText = `position:absolute;inset:${b}px;width:calc(100% - ${2 * b}px);height:calc(100% - ${2 * b}px);display:block;pointer-events:none`;
+      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
       if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
       el.prepend(canvas);
     }
@@ -661,7 +665,21 @@
       o.area = Math.max(0.25, (W * H) / (1200 * 675));
       draw = make(o);
     };
+    // Bleed runs past the element, but never past the sides of the screen:
+    // each side gets what room there is, so the page never scrolls sideways
+    // and no line is cut by the viewport.
+    const fitBleed = () => {
+      if (canvas === el) return;
+      const B = o.bleed || 0, r = el.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+      const side = (room) => Math.max(0, Math.min(B, Math.floor(room) - 4));
+      const b = { l: side(r.left), r: side(vw - r.right), t: B, b: B };
+      const k = o._bleed;
+      if (k && k.l === b.l && k.r === b.r && k.t === b.t) return;
+      o._bleed = b;
+      Object.assign(canvas.style, { left: -b.l + 'px', top: -b.t + 'px', right: 'auto', bottom: 'auto', width: `calc(100% + ${b.l + b.r}px)`, height: `calc(100% + ${b.t + b.b}px)` });
+    };
     const resize = () => {
+      fitBleed();
       const d = Math.min(2, window.devicePixelRatio || 1), r = canvas.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const area = (r.width * r.height) / (1200 * 675);
@@ -755,6 +773,8 @@
     if (contentWatch) contentWatch.observe(host, { subtree: true, childList: true, characterData: true });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { readObstacles(); render(); });
     if (ro) ro.observe(canvas);
+    const onWin = () => { resize(); readObstacles(); render(); };
+    window.addEventListener('resize', onWin, { passive: true });
     if (io) io.observe(canvas);
     if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
     if (mq && mq.addEventListener) mq.addEventListener('change', onScheme);
@@ -767,10 +787,11 @@
         const prev = o.pattern, prevDensity = o.density;
         Object.assign(o, next.preset ? PRESETS[next.preset] : null, next);
         if (o.pattern !== prev || o.density !== prevDensity) build();
-        applyDrag(); pickInk(); readObstacles(); render(); kick();
+        applyDrag(); pickInk(); resize(); readObstacles(); render(); kick();
       },
       destroy() {
         cancelAnimationFrame(raf);
+        window.removeEventListener('resize', onWin);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerdown', onDown);
         window.removeEventListener('pointerup', onUp);
