@@ -35,6 +35,8 @@ importers:
         specifier: '>=3.2'
         version: 3.5.46
 
+  packages/stateline-patterns: {}
+
 packages:
 
   '@babel/helper-string-parser@7.29.15':

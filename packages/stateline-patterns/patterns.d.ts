@@ -1,4 +1,4 @@
-// Types for @jacquesramphal/stateline/patterns, by Jacques Ramphal. MIT.
+// Types for @jacquesramphal/stateline-patterns, by Jacques Ramphal. MIT.
 
 export type PatternName =
   | 'travellers' | 'school' | 'horizon' | 'horizons' | 'islands'

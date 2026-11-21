@@ -1,7 +1,7 @@
 {
   "name": "@jacquesramphal/stateline",
-  "version": "0.2.0",
-  "description": "Form fields whose border is their state, and backgrounds made of the same moves, by Jacques Ramphal. The outline follows the caret, goes jagged when the input is wrong, circles while it sends and flies apart when it is sent. Patterns turn those moves into loose, animated line backgrounds that react to the pointer. Each field enhances a real element, so the form still works without the script.",
+  "version": "0.1.2",
+  "description": "Form fields whose border is their state, by Jacques Ramphal. The outline follows the caret, goes jagged when the input is wrong, circles while it sends and flies apart when it is sent. Plus a checkbox that draws its tick and \"did you mean\" on send. Each one enhances a real element, so the form still works without the script.",
   "license": "MIT",
   "author": {
     "name": "Jacques Ramphal",
@@ -34,10 +34,6 @@
       "types": "./react.d.ts",
       "default": "./react.mjs"
     },
-    "./patterns": {
-      "types": "./patterns.d.ts",
-      "default": "./patterns.js"
-    },
     "./package.json": "./package.json",
     "./options.json": "./options.json"
   },
@@ -53,8 +49,6 @@
     "vue.d.ts",
     "react.mjs",
     "react.d.ts",
-    "patterns.js",
-    "patterns.d.ts",
     "example.html",
     "README.md",
     "CITATION.cff",
@@ -94,10 +88,6 @@
     "accessible",
     "progressive-enhancement",
     "vue",
-    "react",
-    "background",
-    "pattern",
-    "generative",
-    "canvas"
+    "react"
   ]
 }

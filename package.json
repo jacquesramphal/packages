@@ -5,6 +5,6 @@
   "license": "MIT",
   "author": { "name": "Jacques Ramphal", "url": "https://ramphal.design" },
   "scripts": {
-    "test": "node packages/stateline/test.mjs && pnpm --filter @jacquesramphal/smart-quotes test"
+    "test": "node packages/stateline/test.mjs && node packages/stateline-patterns/test.mjs && pnpm --filter @jacquesramphal/smart-quotes test"
   }
 }

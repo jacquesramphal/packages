@@ -4,7 +4,8 @@ Small open-source packages I've made for [ramphal.design](https://ramphal.design
 
 | Package | What it does | npm |
 |---|---|---|
-| [`@jacquesramphal/stateline`](packages/stateline) | Form fields whose border is their state, and line backgrounds made of the same moves. From the essay [Make it pop](https://ramphal.design/doc/make-it-pop). | [npm](https://www.npmjs.com/package/@jacquesramphal/stateline) |
+| [`@jacquesramphal/stateline`](packages/stateline) | Form fields whose border is their state. From the essay [Make it pop](https://ramphal.design/doc/make-it-pop). | [npm](https://www.npmjs.com/package/@jacquesramphal/stateline) |
+| [`@jacquesramphal/stateline-patterns`](packages/stateline-patterns) | Line backgrounds made from Stateline's moves: squiggles that wander, cross and react to the pointer. In progress. | not published yet |
 | [`@jacquesramphal/border-field`](packages/border-field) | The engine under Stateline: an input whose outline follows the caret, waves while it sends and goes jagged when it's wrong. | [npm](https://www.npmjs.com/package/@jacquesramphal/border-field) |
 | [`@jacquesramphal/counter-fill`](packages/counter-fill) | Fills the counters inside letterforms (the holes in o, e and a) with a colour, a gradient or a colour each. | [npm](https://www.npmjs.com/package/@jacquesramphal/counter-fill) |
 | [`@jacquesramphal/smart-quotes`](packages/smart-quotes) | Curly quotes for any framework, without breaking attribute values. | [npm](https://www.npmjs.com/package/@jacquesramphal/smart-quotes) |

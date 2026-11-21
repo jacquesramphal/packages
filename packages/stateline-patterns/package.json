@@ -1,0 +1,49 @@
+{
+  "name": "@jacquesramphal/stateline-patterns",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Line backgrounds made from Stateline's moves, by Jacques Ramphal: squiggles that wander, cross and react to the pointer, keep clear of text and hold still under reduced motion.",
+  "license": "MIT",
+  "author": {
+    "name": "Jacques Ramphal",
+    "url": "https://ramphal.design"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/packages.git",
+    "directory": "packages/stateline-patterns"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/packages/issues"
+  },
+  "homepage": "https://ramphal.design/lab/line-patterns/",
+  "main": "./patterns.js",
+  "types": "./patterns.d.ts",
+  "unpkg": "./patterns.js",
+  "jsdelivr": "./patterns.js",
+  "exports": {
+    ".": {
+      "types": "./patterns.d.ts",
+      "default": "./patterns.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "patterns.js",
+    "patterns.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "background",
+    "pattern",
+    "generative",
+    "canvas",
+    "animation",
+    "lines",
+    "stateline"
+  ]
+}
