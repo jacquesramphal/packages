@@ -63,6 +63,9 @@
       const sx = m[0] * x + m[2] * y + m[4], sy = m[1] * x + m[3] * y + m[5];
       return warp ? warp(sx, sy) : [sx, sy];
     };
+    // A point the warp hides (inside text, with avoidStyle 'break') lifts the
+    // pen; the next visible point starts a new stroke.
+    let up = false;
     const pen = {
       save() { stack.push(m.slice()); },
       restore() { m = stack.pop() || [1, 0, 0, 1, 0, 0]; },
@@ -72,9 +75,17 @@
         m[0] = a * c + cc * s; m[1] = b * c + d * s; m[2] = cc * c - a * s; m[3] = d * c - b * s;
       },
       beginPath() { target.beginPath(); },
-      moveTo(x, y) { const p = map(x, y); target.moveTo(p[0], p[1]); },
-      lineTo(x, y) { const p = map(x, y); target.lineTo(p[0], p[1]); },
-      quadraticCurveTo(cx, cy, x, y) { const c = map(cx, cy), p = map(x, y); target.quadraticCurveTo(c[0], c[1], p[0], p[1]); },
+      moveTo(x, y) { const p = map(x, y); up = !!p[2]; if (!up) target.moveTo(p[0], p[1]); },
+      lineTo(x, y) {
+        const p = map(x, y);
+        if (p[2]) { up = true; return; }
+        if (up) { target.moveTo(p[0], p[1]); up = false; } else target.lineTo(p[0], p[1]);
+      },
+      quadraticCurveTo(cx, cy, x, y) {
+        const c = map(cx, cy), p = map(x, y);
+        if (p[2] || c[2]) { up = true; return; }
+        if (up) { target.moveTo(p[0], p[1]); up = false; } else target.quadraticCurveTo(c[0], c[1], p[0], p[1]);
+      },
       closePath() { target.closePath(); },
       stroke() { target.stroke(); },
     };
@@ -152,6 +163,26 @@
     for (let x = fx + fw; x <= L; x += 4) p.lineTo(x, base(x));
     p.stroke();
   }
+  // A family of contour lines across a box: calm, wobbling, catching the
+  // hand-drawn jag in patches that pass along them.
+  function contourFamily(rand, o, n, short) {
+    const size = sizer(rand, o), k = count(n / Math.sqrt(o.scale), o);
+    return Array.from({ length: short ? n : k }, (_, i) => ({ ...((z) => ({ sc: z.h, sw: z.w }))(size()), y: (i + 0.5) / (short ? n : k), w: wobble(rand, short ? 2 : 6),
+      tilt: (rand() - 0.5) * (short ? 0.05 : 0.12), jx: rand(), js: 0.04 + rand() * 0.06, jlen: (short ? 60 : 120) + rand() * (short ? 90 : 200), jl: 16 + rand() * 10 }));
+  }
+  function drawFamily(p, fam, o, x0, y0, W, H, t, short) {
+    const step = 3, pad = short ? 0 : 20;
+    fam.forEach((l) => {
+      p.beginPath(); p.lineWidth = 1;
+      const cx = (((l.jx + t * l.js) % 1.4) - 0.2) * W, pulse = 0.5 + 0.5 * Math.sin(t * 0.9 + l.jx * 9);
+      for (let x = -pad; x <= W + pad; x += step) {
+        const y = l.y * H + (x - W / 2) * l.tilt + l.w(x + t * 20) * (short ? 0.6 : 1) + tri(x / ((l.jl * l.sw) / o.frequency)) * 9 * l.sc * (short ? 0.6 : 1) * gauss((x - cx) / (l.jlen * o.scale)) * pulse;
+        x === -pad ? p.moveTo(x0 + x, y0 + y) : p.lineTo(x0 + x, y0 + y);
+      }
+      p.stroke();
+    });
+  }
+  const fam2 = (rand, o) => [contourFamily(rand, o, 9), contourFamily(rand, o, 9)];
   const placed = (p, x, y, ang, fn) => { p.save(); p.translate(x, y); p.rotate(ang); fn(); p.restore(); };
   // Rebuild a pattern's parts when the size or density changes.
   const sized = (build) => {
@@ -200,6 +231,16 @@
               const want = Math.atan2(dy, dx) + v.side * (Math.PI / 2) * close;
               v.a += Math.sin(want - v.a) * (2 + 1.5 * Math.min(1, close)) * dt;
               v.boost = close > 0 ? Math.max(0.6, v.boost - dt * 2) : Math.min(1.8, v.boost + dt * 2);
+            }
+          }
+          if (ptr) for (const r of ptr.obstacles) {
+            // Steer round text like a fish round a rock; anything that ends
+            // up inside is nudged out.
+            const q = nearestOut(r, v.x, v.y);
+            if (q.d < 46) {
+              const ahead = Math.cos(v.a) * -q.nx + Math.sin(v.a) * -q.ny;
+              if (ahead > -0.2 || q.d < 0) v.a += Math.sin(Math.atan2(q.ny, q.nx) - v.a) * 5 * dt * (1 - Math.max(0, q.d) / 46);
+              if (q.d < 0) { v.x = q.x + q.nx * 2; v.y = q.y + q.ny * 2; }
             }
           }
           v.boost = 1 + (v.boost - 1) * Math.pow(0.4, dt);
@@ -261,7 +302,7 @@
     travellers: travellers(false),
     school: travellers(true),
 
-    horizon: (o) => {
+    horizon: () => {
       const rand = rng(11);
       const parts = sized((W, H, o) => makeHorizon(rand, { len: W + 80, fx: 0.42, fw: 0.2 * o.scale, fh: 70, phase: 0, sc: o.scale, sw: o.scale, fq: o.frequency }));
       return (p, W, H, t, ptr, o) => placed(p, -40, H * 0.62, 0, () => drawHorizon(p, parts(W, H, o), t));
@@ -345,13 +386,32 @@
       };
     },
     contours: (o) => {
-      const rand = rng(7), n = count(11 / Math.sqrt(o.scale), o), size = sizer(rand, o);
-      const C = Array.from({ length: n }, (_, i) => ({ ...((z) => ({ sc: z.h, sw: z.w }))(size()), y: (i + 0.5) / n, w: wobble(rand, 6), tilt: (rand() - 0.5) * 0.12, lw: 1.4 + rand(), jx: rand(), js: 0.04 + rand() * 0.06, jlen: 120 + rand() * 200, jl: 16 + rand() * 10 }));
-      return (p, W, H, t) => C.forEach((l) => {
-        p.beginPath(); p.lineWidth = l.lw;
-        const cx = (((l.jx + t * l.js) % 1.4) - 0.2) * W, pulse = 0.5 + 0.5 * Math.sin(t * 0.9 + l.jx * 9);
-        for (let x = -20; x <= W + 20; x += 3) { const y = l.y * H + (x - W / 2) * l.tilt + l.w(x + t * 20) + tri(x / ((l.jl * l.sw) / o.frequency)) * 9 * l.sc * gauss((x - cx) / (l.jlen * o.scale)) * pulse; x < -19 ? p.moveTo(x, y) : p.lineTo(x, y); }
-        p.stroke();
+      const fam = contourFamily(rng(7), o, 11);
+      return (p, W, H, t) => drawFamily(p, fam, o, 0, 0, W, H, t);
+    },
+    // Two families of contours crossing at an angle: a woven lattice.
+    lattice: (o) => {
+      const rand = rng(19), a = fam2(rand, o);
+      return (p, W, H, t) => {
+        const D = Math.hypot(W, H);
+        [o.angle, -o.angle].forEach((deg, i) => placed(p, W / 2, H / 2, (deg * Math.PI) / 180, () => drawFamily(p, a[i], o, -D / 2, -D / 2, D, D, t + i * 3.7)));
+      };
+    },
+    // A quilt: patches of short contours, some running across, some down.
+    patchwork: (o) => {
+      const rand = rng(29);
+      const parts = sized((W, H, o) => {
+        const cell = 230 * o.scale / Math.sqrt(o.density), cols = Math.max(2, Math.round(W / cell)), rows = Math.max(2, Math.round(H / cell));
+        const cw = W / cols, ch = H / rows, out = [];
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const vert = (r + c) % 2 === 1 ? rand() < 0.85 : rand() < 0.15;
+          out.push({ x: c * cw, y: r * ch, w: cw, h: ch, vert, fam: contourFamily(rand, o, Math.max(3, Math.round((vert ? cw : ch) / 26)), true) });
+        }
+        return out;
+      });
+      return (p, W, H, t) => parts(W, H, o).forEach((c, i) => {
+        if (c.vert) placed(p, c.x + c.w, c.y, Math.PI / 2, () => drawFamily(p, c.fam, o, 0, 0, c.h, c.w, t + i * 1.3, true));
+        else drawFamily(p, c.fam, o, c.x, c.y, c.w, c.h, t + i * 1.3, true);
       });
     },
     loops: (o) => {
@@ -378,7 +438,7 @@
   const LIST = [
     ['travellers', 'Travellers'], ['school', 'School'], ['horizon', 'Horizon'], ['horizons', 'Horizons'],
     ['islands', 'Islands'], ['strands', 'Strands'], ['waves', 'Waves'], ['pieces', 'Pieces'],
-    ['contours', 'Contours'], ['loops', 'Loops'],
+    ['contours', 'Contours'], ['lattice', 'Lattice'], ['patchwork', 'Patchwork'], ['loops', 'Loops'],
   ];
 
   const DEFAULTS = {
@@ -398,6 +458,10 @@
     ripple: true,       // a tap or click sends out a ripple that clears the lines
     drag: 'horizontal', // finger drags: 'horizontal' (the page still scrolls up and down), true (all ways), false
     clear: null,        // keep part empty for text: 'left' | 'right' | 'top' | 'bottom' | { side, size, feather }
+    avoid: null,        // flow round shapes: 'text' (the text inside the element), a selector, or elements
+    avoidPadding: 14,   // px kept round each shape
+    avoidStyle: 'break', // 'break': lines stop at the shape and pick up past it; 'bend': they bend round it
+    angle: 30,          // lattice: degrees each family leans either way
     still: false,       // draw one frame and stop (also under reduced motion)
     time: 3.2,          // the moment a still shows, in seconds
   };
@@ -428,7 +492,24 @@
       : { x0: 0, y0: from, x1: 0, y1: to, fill: s === 'top' ? [0, 0, W, b] : [0, len - b, W, b] };
   };
 
-  function makeWarp(o, ptr, getT) {
+  /* ---------- obstacles: text and other shapes to flow around ----------
+   * Each is a rect in canvas pixels, padded. outside(r, x, y) gives the
+   * nearest point on its edge and the outward normal, so a point inside
+   * can be moved out and a point near it eased away. */
+  function nearestOut(r, x, y) {
+    const inside = x > r.l && x < r.r && y > r.t && y < r.b;
+    if (inside) {
+      const dl = x - r.l, dr = r.r - x, dt = y - r.t, db = r.b - y, m = Math.min(dl, dr, dt, db);
+      if (m === dt) return { x, y: r.t, nx: 0, ny: -1, d: -dt };
+      if (m === db) return { x, y: r.b, nx: 0, ny: 1, d: -db };
+      if (m === dl) return { x: r.l, y, nx: -1, ny: 0, d: -dl };
+      return { x: r.r, y, nx: 1, ny: 0, d: -dr };
+    }
+    const cx = clamp(x, r.l, r.r), cy = clamp(y, r.t, r.b), dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy) || 1;
+    return { x: cx, y: cy, nx: dx / d, ny: dy / d, d };
+  }
+
+  function makeWarp(o, ptr, getT, obstaclesOnly) {
     const bend = (x, y) => {
       const mode = ptr.mode;
       if (!ptr.on || mode === 'none') return [x, y];
@@ -444,11 +525,21 @@
     // Ripples: a ring running out from a tap pushes the lines it passes
     // outward, then lets them settle back.
     return (x, y) => {
-      let [px, py] = bend(x, y);
-      for (const rp of ptr.ripples) {
+      let [px, py] = obstaclesOnly ? [x, y] : bend(x, y);
+      if (!obstaclesOnly) for (const rp of ptr.ripples) {
         const dx = px - rp.x, dy = py - rp.y, d = Math.hypot(dx, dy) || 1;
         const k = gauss((d - rp.r) / 34) * rp.k;
         if (k > 0.002) { px += (dx / d) * 34 * k; py += (dy / d) * 34 * k; }
+      }
+      // Text and other obstacles: a point inside moves to the edge, and a
+      // point just outside eases away, so lines bend round the shapes.
+      const F = 18, brk = o.avoidStyle !== 'bend';
+      for (const r of ptr.obstacles) {
+        if (px < r.l - F || px > r.r + F || py < r.t - F || py > r.b + F) continue;
+        const q = nearestOut(r, px, py);
+        if (q.d < 0 && (brk || obstaclesOnly)) return [px, py, true];
+        const push = q.d < 0 ? -q.d + F * 0.5 : Math.max(0, F - q.d) * (obstaclesOnly ? 0 : 0.5);
+        px += q.nx * push; py += q.ny * push;
       }
       return [px, py];
     };
@@ -477,9 +568,33 @@
     // pointer events when it was added), so the rule goes there.
     const host = canvas === el ? canvas.parentElement || canvas : el;
     const prevTouch = host.style.touchAction;
+    // Obstacles: the shapes of the text (each line of it) or of chosen
+    // elements, in canvas pixels. Read on resize, when the content changes,
+    // and once fonts have loaded.
+    const readObstacles = () => {
+      ptr.obstacles = [];
+      if (!o.avoid) return;
+      const c = canvas.getBoundingClientRect(), pad = o.avoidPadding, rects = [];
+      if (o.avoid === 'text') {
+        const walk = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+        const range = document.createRange();
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const st = getComputedStyle(n.parentElement);
+          if (st.visibility === 'hidden' || st.display === 'none') continue;
+          range.selectNodeContents(n);
+          for (const r of range.getClientRects()) rects.push(r);
+        }
+      } else {
+        const els = typeof o.avoid === 'string' ? host.querySelectorAll(o.avoid) : [].concat(o.avoid);
+        els.forEach((e) => rects.push(e.getBoundingClientRect()));
+      }
+      rects.forEach((r) => { if (r.width && r.height) ptr.obstacles.push({ l: r.left - c.left - pad, t: r.top - c.top - pad, r: r.right - c.left + pad, b: r.bottom - c.top + pad }); });
+    };
+    let obstacleTimer = 0;
+    const queueObstacles = () => { clearTimeout(obstacleTimer); obstacleTimer = setTimeout(() => { readObstacles(); render(); }, 120); };
     const applyDrag = () => { host.style.touchAction = o.drag === true ? 'none' : o.drag === 'horizontal' ? 'pan-y' : prevTouch; };
     applyDrag();
-    const ptr = { x: 0, y: 0, on: false, fade: 0, speed: 0, lx: 0, ly: 0, lt: 0, touch: false, mode: 'none', ripples: [] };
+    const ptr = { x: 0, y: 0, on: false, fade: 0, speed: 0, lx: 0, ly: 0, lt: 0, touch: false, mode: 'none', ripples: [], obstacles: [] };
     let draw = null, W = 0, H = 0, raf = 0, visible = true, t = 0, lastNow = 0, ink = '#000';
     const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const still = () => o.still || reduced();
@@ -502,7 +617,8 @@
       if (!draw) return;
       ctx.clearRect(0, 0, W, H);
       ctx.globalAlpha = o.strength; ctx.strokeStyle = ink;
-      const warp = draw.ownPointer ? null : makeWarp(o, ptr, () => t);
+      // Travellers steer themselves; their pen only hides what crosses text.
+      const warp = draw.ownPointer ? (ptr.obstacles.length ? makeWarp(o, ptr, () => t, true) : null) : makeWarp(o, ptr, () => t);
       draw(makePen(ctx, o, warp), W, H, still() ? o.time : t, ptr, o);
       ctx.globalAlpha = 1;
       const c = normClear(o.clear);
@@ -567,13 +683,16 @@
     window.addEventListener('pointercancel', onUp, { passive: true });
     document.addEventListener('pointerleave', onLeave);
 
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { resize(); render(); kick(); }) : null;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { resize(); readObstacles(); render(); kick(); }) : null;
+    const contentWatch = typeof MutationObserver !== 'undefined' ? new MutationObserver(queueObstacles) : null;
     const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) kick(); }) : null;
     // The ink follows the theme: a class or data attribute on <html>, or the OS setting.
     const mo = typeof MutationObserver !== 'undefined' ? new MutationObserver(() => { pickInk(); render(); }) : null;
     const mq = typeof matchMedia !== 'undefined' ? matchMedia('(prefers-color-scheme: dark)') : null;
     const onScheme = () => { pickInk(); render(); };
-    resize(); pickInk();
+    resize(); pickInk(); readObstacles();
+    if (contentWatch) contentWatch.observe(host, { subtree: true, childList: true, characterData: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { readObstacles(); render(); });
     if (ro) ro.observe(canvas);
     if (io) io.observe(canvas);
     if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
@@ -587,7 +706,7 @@
         const prev = o.pattern, prevDensity = o.density;
         Object.assign(o, next.preset ? PRESETS[next.preset] : null, next);
         if (o.pattern !== prev || o.density !== prevDensity) build();
-        applyDrag(); pickInk(); render(); kick();
+        applyDrag(); pickInk(); readObstacles(); render(); kick();
       },
       destroy() {
         cancelAnimationFrame(raf);
@@ -596,7 +715,8 @@
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
         document.removeEventListener('pointerleave', onLeave);
-        if (ro) ro.disconnect(); if (io) io.disconnect(); if (mo) mo.disconnect();
+        if (ro) ro.disconnect(); if (io) io.disconnect(); if (mo) mo.disconnect(); if (contentWatch) contentWatch.disconnect();
+        clearTimeout(obstacleTimer);
         if (mq && mq.removeEventListener) mq.removeEventListener('change', onScheme);
         host.style.touchAction = prevTouch;
         if (canvas !== el) canvas.remove();

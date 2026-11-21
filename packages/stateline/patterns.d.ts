@@ -2,7 +2,7 @@
 
 export type PatternName =
   | 'travellers' | 'school' | 'horizon' | 'horizons' | 'islands'
-  | 'strands' | 'waves' | 'pieces' | 'contours' | 'loops';
+  | 'strands' | 'waves' | 'pieces' | 'contours' | 'lattice' | 'patchwork' | 'loops';
 
 export type PresetName = 'calm' | 'lively' | 'fish' | 'chase' | 'wrinkle' | 'beside' | 'mixed' | 'big';
 
@@ -46,6 +46,14 @@ export interface PatternOptions {
   drag?: 'horizontal' | boolean;
   /** Keep part empty for text: a side, or { side, size, feather }. */
   clear?: 'left' | 'right' | 'top' | 'bottom' | ClearOptions | null;
+  /** Flow round shapes: 'text' (each line of text inside the element), a selector, or elements. Works with clear. */
+  avoid?: 'text' | string | Element | Element[] | null;
+  /** px kept round each shape. Default 14. */
+  avoidPadding?: number;
+  /** 'break' (default): lines stop at a shape and pick up past it. 'bend': they bend round it. */
+  avoidStyle?: 'break' | 'bend';
+  /** Lattice: degrees each family of lines leans either way. Default 30. */
+  angle?: number;
   /** Draw one frame and stop. Also on under prefers-reduced-motion. */
   still?: boolean;
   /** The moment a still shows, in seconds. */

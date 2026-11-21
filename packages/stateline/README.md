@@ -333,6 +333,8 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `waves` | Loose lines with a wave travelling along each |
 | `pieces` | Strokes that drift, gather into lines and fly apart |
 | `contours` | Calm lines that catch the jag in patches |
+| `lattice` | Two families of contours crossing at an angle (`angle`, default 30) |
+| `patchwork` | A quilt of patches, some contours running across, some down |
 | `loops` | Loose rings that swell where an unseen caret passes |
 
 | Option | Default | |
@@ -354,6 +356,10 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `ripple` | `true` | A tap or click sends out a ripple that clears the lines |
 | `drag` | `'horizontal'` | Finger drags move the lines: `'horizontal'` keeps vertical scrolling, `true` takes every direction (full screen), `false` none |
 | `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }` |
+| `avoid` | none | Flow round shapes: `'text'` (each line of text inside the element), a selector, or elements. Lines bend round them and travellers steer round them. Use with `clear` or on its own |
+| `avoidPadding` | `14` | px kept round each shape |
+| `avoidStyle` | `'break'` | `'break'`: lines stop at a shape and pick up past it. `'bend'`: they bend round it |
+| `angle` | `30` | Lattice: degrees each family leans |
 | `still` | `false` | One frame, no animation |
 | `time` | `3.2` | Which moment a still shows |
 
