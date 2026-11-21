@@ -623,9 +623,12 @@
       ctx.globalAlpha = 1;
       const c = normClear(o.clear);
       if (c) {
-        const b = clearBox(c, W, H), g = ctx.createLinearGradient(b.x0, b.y0, b.x1, b.y1);
-        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = g; ctx.fillRect(...b.fill);
+        // feather 0 is a hard edge: a gradient with no length paints nothing,
+        // so it's a solid fill instead.
+        const b = clearBox(c, W, H);
+        let fill = 'rgba(0,0,0,1)';
+        if (c.feather > 0) { fill = ctx.createLinearGradient(b.x0, b.y0, b.x1, b.y1); fill.addColorStop(0, 'rgba(0,0,0,1)'); fill.addColorStop(1, 'rgba(0,0,0,0)'); }
+        ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = fill; ctx.fillRect(...b.fill);
         ctx.globalCompositeOperation = 'source-over';
       }
       if (o.bg) { ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = o.bg; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; }
@@ -740,7 +743,7 @@
     if (c) {
       const b = clearBox(c, W, H);
       defs = `<defs><linearGradient id="sl-fade" gradientUnits="userSpaceOnUse" x1="${b.x0}" y1="${b.y0}" x2="${b.x1}" y2="${b.y1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>`
-        + `<mask id="sl-clear"><rect width="${W}" height="${H}" fill="#fff"/><rect x="${b.fill[0]}" y="${b.fill[1]}" width="${b.fill[2]}" height="${b.fill[3]}" fill="url(#sl-fade)"/></mask></defs>`;
+        + `<mask id="sl-clear"><rect width="${W}" height="${H}" fill="#fff"/><rect x="${b.fill[0]}" y="${b.fill[1]}" width="${b.fill[2]}" height="${b.fill[3]}" fill="${c.feather > 0 ? 'url(#sl-fade)' : '#000'}"/></mask></defs>`;
       mask = ' mask="url(#sl-clear)"';
     }
     const bg = o.bg ? `<rect width="${W}" height="${H}" fill="${o.bg}"/>` : '';

@@ -355,7 +355,7 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `pointerOnTouch` | `false` | Hover effects for touch pointers too. Pressing and dragging a finger always moves the lines |
 | `ripple` | `true` | A tap or click sends out a ripple that clears the lines |
 | `drag` | `'horizontal'` | Finger drags move the lines: `'horizontal'` keeps vertical scrolling, `true` takes every direction (full screen), `false` none |
-| `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }` |
+| `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }`. `feather: 0` clears with a hard edge and no fade |
 | `avoid` | none | Flow round shapes: `'text'` (each line of text inside the element), a selector, or elements. Lines bend round them and travellers steer round them. Use with `clear` or on its own |
 | `avoidPadding` | `14` | px kept round each shape |
 | `avoidStyle` | `'break'` | `'break'`: lines stop at a shape and pick up past it. `'bend'`: they bend round it |

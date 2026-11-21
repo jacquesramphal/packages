@@ -10,7 +10,7 @@ export interface ClearOptions {
   side?: 'left' | 'right' | 'top' | 'bottom';
   /** Share of the width (or height) kept empty, 0 to 1. Default 0.42. */
   size?: number;
-  /** Share over which the lines fade back in. Default 0.14. */
+  /** Share over which the lines fade back in. Default 0.14; 0 is a hard edge with no fade. */
   feather?: number;
 }
 
