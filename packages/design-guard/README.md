@@ -1,5 +1,7 @@
 ## @jacquesramphal/design-guard
 
+[npm](https://www.npmjs.com/package/@jacquesramphal/design-guard) · [source](https://github.com/jacquesramphal/packages/tree/main/packages/design-guard)
+
 Repo-local “design guard” CLI to detect **hardcoded design values** in code/styles.
 
 ### Why

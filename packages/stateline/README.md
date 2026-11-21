@@ -1,5 +1,7 @@
 # Stateline
 
+[npm](https://www.npmjs.com/package/@jacquesramphal/stateline) · [source](https://github.com/jacquesramphal/packages/tree/main/packages/stateline)
+
 Form fields whose border is their state, by [Jacques Ramphal](https://ramphal.design).
 
 While you type, the border follows the caret, and when the address is wrong it goes jagged and trembles. While it sends a wave circles it, and once it's sent the outline flies apart round a check. If the domain looks like a typo it asks "Did you mean you@gmail.com?" before it sends. The checkbox squashes when you press it and draws its tick in.

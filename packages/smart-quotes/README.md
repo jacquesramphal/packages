@@ -1,5 +1,7 @@
 ## @jacquesramphal/smart-quotes
 
+[npm](https://www.npmjs.com/package/@jacquesramphal/smart-quotes) · [source](https://github.com/jacquesramphal/packages/tree/main/packages/smart-quotes)
+
 Convert straight quotes (`’` and `”`) into Unicode smart quotes (`‘ ’ “ ”`) **in human-readable content**, without mangling code.
 
 ### Why

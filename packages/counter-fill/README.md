@@ -1,5 +1,7 @@
 # Counter Fill: Colouring the Holes in Your Type
 
+[npm](https://www.npmjs.com/package/@jacquesramphal/counter-fill) · [source](https://github.com/jacquesramphal/packages/tree/main/packages/counter-fill)
+
 Fills the enclosed counter spaces inside letterforms — the holes in **o, e, a, g, d, b, p** — with a colour, a gradient, or a different colour in each counter, optionally set in from the letter by a ring of background.
 
 Fully generative. Works on any word, any font, any size. No hardcoded letterforms. Real DOM text — accessible, selectable, screen-readable. Fills are drawn as vector paths by default, so they stay sharp at any zoom, with a canvas fallback.

@@ -1,5 +1,7 @@
 # Border field
 
+[npm](https://www.npmjs.com/package/@jacquesramphal/border-field) · [source](https://github.com/jacquesramphal/packages/tree/main/packages/border-field)
+
 An input whose outline is its state. While you type, the border swells over the letter you're on and follows it. While the form sends, a wave runs round it. When the input is wrong, it goes jagged. When it's sent, the border bursts into a sunburst and confetti made of the line itself.
 
 It's still a real form. The browser's own validation decides what's wrong (`type="email"`, `required`, `pattern`), the label and the message stay as they are, and without JavaScript, or without an `onSubmit`, the form submits the way it always did. The script draws an SVG over the field and redraws it every frame. It has no dependencies and is about 18 KB unminified.
