@@ -398,11 +398,13 @@
       const parts = sized((W, H, o) => {
         const side = o.clear ? (typeof o.clear === 'string' ? o.clear : o.clear.side || 'left') : null;
         const x0 = side === 'left' ? 0.5 : 0, x1 = side === 'right' ? 0.5 : 1;
+        const y0 = side === 'top' ? 0.5 : 0, y1 = side === 'bottom' ? 0.5 : 1;
         return Array.from({ length: count(7, o) }, (_, i) => {
           const z = size(), dir = i % 2 ? 1 : -1;
           // Half lean each way so they cross; centres sit inside the box.
-          return { x: x0 + (x1 - x0) * (0.12 + rand() * 0.8), y: 0.15 + rand() * 0.7, a: dir * (0.55 + rand() * 0.4), out: rand() * 0.85,
-            len: (0.45 + rand() * 0.7) * Math.hypot(W, H) * 0.55 * o.scale, amp: (4 + rand() * 5) * z.h, wl: ((15 + rand() * 12) * z.w) / o.frequency,
+          // Every line runs right across, out through the border at both ends.
+          return { x: x0 + (x1 - x0) * (0.12 + rand() * 0.8), y: y0 + (y1 - y0) * (0.15 + rand() * 0.7), a: dir * (0.55 + rand() * 0.4), out: 0.4 + rand() * 0.6,
+            len: Math.hypot(W, H) * 2.2, amp: (4 + rand() * 5) * z.h, wl: ((15 + rand() * 12) * z.w) / o.frequency,
             env: [rand() * 6, rand() * 6, 1.5 + rand() * 2], sp: (0.6 + rand() * 0.8) * (rand() < 0.5 ? -1 : 1), drift: rand() * 6 };
         });
       });
@@ -784,9 +786,9 @@
       canvas,
       get options() { return Object.assign({}, o); },
       set(next) {
-        const prev = o.pattern, prevDensity = o.density;
+        const prev = o.pattern, prevDensity = o.density, prevClear = JSON.stringify(o.clear);
         Object.assign(o, next.preset ? PRESETS[next.preset] : null, next);
-        if (o.pattern !== prev || o.density !== prevDensity) build();
+        if (o.pattern !== prev || o.density !== prevDensity || JSON.stringify(o.clear) !== prevClear) build();
         applyDrag(); pickInk(); resize(); readObstacles(); render(); kick();
       },
       destroy() {
