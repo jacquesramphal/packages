@@ -478,11 +478,26 @@
     big: { scale: 1.8, density: 0.6 },
   };
 
-  const normClear = (c) => {
+  const normClear = (c, o) => {
     if (!c) return null;
-    if (typeof c === 'string') return { side: c, size: 0.42, feather: 0.14 };
-    return Object.assign({ side: 'left', size: 0.42, feather: 0.14 }, c);
+    const base = { side: 'left', size: 0.42, feather: 0.14, edge: 'fade', slant: null };
+    const out = Object.assign(base, typeof c === 'string' ? { side: c } : c);
+    // A slanted break follows the lattice's own angle unless given one.
+    if (out.slant == null) out.slant = out.edge === 'break' && o && o.pattern === 'lattice' ? o.angle : 0;
+    return out;
   };
+  // edge 'break': no fade and no cut. Each line simply ends where it reaches
+  // the cleared side, so the ends make a natural edge. The boundary leans by
+  // `slant` degrees and wavers a little, so the ends don't line up like a ruler.
+  function inClear(c, W, H, x, y) {
+    const t = Math.tan((c.slant * Math.PI) / 180);
+    if (c.side === 'left' || c.side === 'right') {
+      const b = c.size * W + (y - H / 2) * t + Math.sin(y / 41) * 6 + Math.sin(y / 17) * 3;
+      return c.side === 'left' ? x < b : x > W - b;
+    }
+    const b = c.size * H + (x - W / 2) * t + Math.sin(x / 41) * 6 + Math.sin(x / 17) * 3;
+    return c.side === 'top' ? y < b : y > H - b;
+  }
   // The cleared side, as a gradient from fully clear to fully drawn.
   const clearBox = (c, W, H) => {
     const s = c.side, horiz = s === 'left' || s === 'right', len = horiz ? W : H;
@@ -509,7 +524,8 @@
     return { x: cx, y: cy, nx: dx / d, ny: dy / d, d };
   }
 
-  function makeWarp(o, ptr, getT, obstaclesOnly) {
+  function makeWarp(o, ptr, getT, obstaclesOnly, box) {
+    const cut = box && box.clear && box.clear.edge === 'break' ? box.clear : null;
     const bend = (x, y) => {
       const mode = ptr.mode;
       if (!ptr.on || mode === 'none') return [x, y];
@@ -533,6 +549,7 @@
       }
       // Text and other obstacles: a point inside moves to the edge, and a
       // point just outside eases away, so lines bend round the shapes.
+      if (cut && inClear(cut, box.W, box.H, px, py)) return [px, py, true];
       const F = 18, brk = o.avoidStyle !== 'bend';
       for (const r of ptr.obstacles) {
         if (px < r.l - F || px > r.r + F || py < r.t - F || py > r.b + F) continue;
@@ -618,11 +635,12 @@
       ctx.clearRect(0, 0, W, H);
       ctx.globalAlpha = o.strength; ctx.strokeStyle = ink;
       // Travellers steer themselves; their pen only hides what crosses text.
-      const warp = draw.ownPointer ? (ptr.obstacles.length ? makeWarp(o, ptr, () => t, true) : null) : makeWarp(o, ptr, () => t);
+      const c = normClear(o.clear, o), box = { W, H, clear: c };
+      const needs = ptr.obstacles.length || (c && c.edge === 'break');
+      const warp = draw.ownPointer ? (needs ? makeWarp(o, ptr, () => t, true, box) : null) : makeWarp(o, ptr, () => t, false, box);
       draw(makePen(ctx, o, warp), W, H, still() ? o.time : t, ptr, o);
       ctx.globalAlpha = 1;
-      const c = normClear(o.clear);
-      if (c) {
+      if (c && c.edge !== 'break') {
         // feather 0 is a hard edge: a gradient with no length paints nothing,
         // so it's a solid fill instead.
         const b = clearBox(c, W, H);
@@ -734,13 +752,15 @@
     o.area = Math.max(0.25, (W * H) / (1200 * 675));
     const target = svgTarget();
     const draw = (PATTERNS[o.pattern] || PATTERNS.travellers)(o);
+    const c = normClear(o.clear, o);
+    const still = { obstacles: [], ripples: [], mode: 'none', on: false };
+    const warp = c && c.edge === 'break' ? makeWarp(o, still, () => o.time, true, { W, H, clear: c }) : null;
     // Simulated patterns (the travellers) step through time to reach the still.
-    if (draw.simulated) for (let s = 0; s <= o.time; s += 1 / 30) draw(makePen(target, o, null), W, H, s, null, o);
+    if (draw.simulated) for (let s = 0; s <= o.time; s += 1 / 30) draw(makePen(target, o, warp), W, H, s, null, o);
     target.out.length = 0;
-    draw(makePen(target, o, null), W, H, o.time, null, o);
-    const c = normClear(o.clear);
+    draw(makePen(target, o, warp), W, H, o.time, null, o);
     let defs = '', mask = '';
-    if (c) {
+    if (c && c.edge !== 'break') {
       const b = clearBox(c, W, H);
       defs = `<defs><linearGradient id="sl-fade" gradientUnits="userSpaceOnUse" x1="${b.x0}" y1="${b.y0}" x2="${b.x1}" y2="${b.y1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>`
         + `<mask id="sl-clear"><rect width="${W}" height="${H}" fill="#fff"/><rect x="${b.fill[0]}" y="${b.fill[1]}" width="${b.fill[2]}" height="${b.fill[3]}" fill="${c.feather > 0 ? 'url(#sl-fade)' : '#000'}"/></mask></defs>`;

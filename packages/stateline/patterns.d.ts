@@ -12,6 +12,10 @@ export interface ClearOptions {
   size?: number;
   /** Share over which the lines fade back in. Default 0.14; 0 is a hard edge with no fade. */
   feather?: number;
+  /** 'fade' (default) fades the lines out; 'break' ends each line where it reaches the side, a natural edge with no fade or cut. */
+  edge?: 'fade' | 'break';
+  /** Degrees the edge leans. Lattice with edge 'break' follows its own angle. Default 0. */
+  slant?: number;
 }
 
 export interface PatternOptions {
