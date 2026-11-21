@@ -57,6 +57,7 @@
     "patterns.d.ts",
     "example.html",
     "README.md",
+    "CITATION.cff",
     "LICENSE"
   ],
   "dependencies": {

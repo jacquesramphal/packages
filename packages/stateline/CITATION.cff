@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use or build on Stateline, please credit it as below."
+title: "Stateline: form fields whose border is their state"
+type: software
+authors:
+  - given-names: Jacques
+    family-names: Ramphal
+    website: "https://ramphal.design"
+version: 0.2.0
+date-released: 2026-11-19
+license: MIT
+url: "https://ramphal.design/doc/make-it-pop"
+repository-artifact: "https://www.npmjs.com/package/@jacquesramphal/stateline"
+abstract: >-
+  Form fields whose border is their state. The outline follows the caret,
+  goes jagged when the input is wrong, circles while it sends and flies
+  apart when it is sent, and every element enhances a real one. Patterns
+  turn the same moves into animated line backgrounds. From the essay
+  Make it pop.
+keywords:
+  - forms
+  - input
+  - animation
+  - accessibility

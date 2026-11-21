@@ -398,6 +398,10 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 
 Next, in the same language: a radio whose dot rolls to the new option, a toggle whose knob squashes as it travels, a select whose outline hands over to the open list, and a textarea.
 
+## Origin
+
+I designed and built Stateline, and first showed it in November 2026. It grew out of [border-field](https://www.npmjs.com/package/@jacquesramphal/border-field) and the essay [Make it pop](https://ramphal.design/doc/make-it-pop), and both packages were first published to npm on 19 November 2026. If you write about it or build on the idea, a link back to the essay is the credit I'd most like. To cite it, use [CITATION.cff](CITATION.cff).
+
 ## Licence
 
 MIT © Jacques Ramphal. Use it, change it, ship it. Credit is appreciated, and I'd love to see what you make with it: [ramphal.design](https://ramphal.design).
