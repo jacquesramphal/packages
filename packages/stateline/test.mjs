@@ -2,7 +2,7 @@
 // promises, the suggester, the defaults the site and npm share, and that the
 // lab copy of border-field is the one npm gets. Run: pnpm stateline:test
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const require = createRequire(import.meta.url);
@@ -10,6 +10,10 @@ const Stateline = require('./stateline.js');
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)));
 let n = 0;
 const ok = (name, fn) => { fn(); n++; console.log(`ok ${n} ${name}`); };
+// Two checks look at the website that uses the package. They only run inside
+// that repo; anywhere else they're skipped.
+const inSite = existsSync(new URL('../../src/utils/emailSuggest.js', import.meta.url));
+const siteOk = (name, fn) => (inSite ? ok(name, fn) : console.log(`skip ${name} (not in the site repo)`));
 
 ok('core exports', () => {
   for (const k of ['field', 'checkbox', 'suggestEmail', 'enhance', 'addStyles', 'setValue', 'spring', 'DEFAULTS']) assert.ok(k in Stateline, k);
@@ -39,7 +43,7 @@ ok('the essay look is the default', () => {
   assert.equal(d.suggest, true);
 });
 
-ok('the site uses the package, not a copy', () => {
+siteOk('the site uses the package, not a copy', () => {
   const site = readFileSync(new URL('../../src/utils/emailSuggest.js', import.meta.url), 'utf8');
   assert.match(site, /from '@jacquesramphal\/stateline'/);
   for (const f of ['../../src/components/blog/SubscribeField.vue', '../../src/components/form/PopCheckbox.vue']) {
@@ -81,7 +85,7 @@ ok('patterns: every one draws a still, with a clear mask when asked', () => {
   for (const name of Object.keys(P.PRESETS)) assert.ok(P.svg('travellers', { preset: name }).startsWith('<svg'), name);
 });
 
-ok('the lab runs the package patterns, not a copy', () => {
+siteOk('the lab runs the package patterns, not a copy', () => {
   const lab = readFileSync(new URL('../../public/lab/line-patterns/patterns.js', import.meta.url), 'utf8');
   assert.equal(lab, readFileSync(new URL('./patterns.js', import.meta.url), 'utf8'));
 });
