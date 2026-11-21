@@ -320,7 +320,7 @@ bg.destroy();
 
 Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/stateline@0/patterns.js"></script>` sets `window.StatelinePatterns`.
 
-**Smart defaults.** The ink is the element's text colour and follows the theme. The number of lines scales with the area. Under `prefers-reduced-motion` it draws one still frame. It pauses offscreen, and the pointer reacts to a mouse only.
+**Smart defaults.** The ink is the element's text colour and follows the theme. The number of lines scales with the area. Under `prefers-reduced-motion` it draws one still frame. It pauses offscreen. Hover effects follow a mouse; on a phone, a tap sends a ripple and pressing and dragging a finger moves the lines, without blocking the page's scroll.
 
 | Pattern | |
 |---|---|
@@ -338,16 +338,21 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | Option | Default | |
 |---|---|---|
 | `pattern` | `'travellers'` | One of the above |
-| `preset` | | `calm`, `lively`, `fish` (school + avoid), `chase`, `wrinkle`, `beside` (clear the left) |
+| `preset` | | `calm`, `lively`, `fish` (school + avoid), `chase`, `wrinkle`, `beside` (clear the left), `mixed`, `big` |
 | `ink` | text colour | Line colour |
 | `bg` | transparent | Fill behind the lines |
 | `speed` | `1` | |
 | `strength` | `1` | Opacity of the lines |
 | `density` | `1` | More or fewer lines, on top of the area scaling |
 | `weight` | `1` | Line width multiplier |
+| `scale` | `1` | Size of the moves: height, wavelength and length together |
+| `frequency` | `1` | Wavelength only: the same size, tighter above 1, looser below |
+| `variance` | `0` | Mixed scale: each element its own size, from `0` (all alike) to `1` (widely mixed). La Linea pattern starts at `0.6` |
 | `pointer` | `'none'` | `chase` (circle it like fish), `avoid` (part around it), `rub` (squiggle where it moves), `wrinkle` (the error jag around it) |
 | `pointerRadius` | `110` | px |
-| `pointerOnTouch` | `false` | |
+| `pointerOnTouch` | `false` | Hover effects for touch pointers too. Pressing and dragging a finger always moves the lines |
+| `ripple` | `true` | A tap or click sends out a ripple that clears the lines |
+| `drag` | `'horizontal'` | Finger drags move the lines: `'horizontal'` keeps vertical scrolling, `true` takes every direction (full screen), `false` none |
 | `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }` |
 | `still` | `false` | One frame, no animation |
 | `time` | `3.2` | Which moment a still shows |

@@ -4,7 +4,7 @@ export type PatternName =
   | 'travellers' | 'school' | 'linea' | 'lineaGroup' | 'lineaPattern'
   | 'strands' | 'waves' | 'pieces' | 'contours' | 'loops';
 
-export type PresetName = 'calm' | 'lively' | 'fish' | 'chase' | 'wrinkle' | 'beside';
+export type PresetName = 'calm' | 'lively' | 'fish' | 'chase' | 'wrinkle' | 'beside' | 'mixed' | 'big';
 
 export interface ClearOptions {
   side?: 'left' | 'right' | 'top' | 'bottom';
@@ -29,11 +29,21 @@ export interface PatternOptions {
   density?: number;
   /** Line width multiplier. */
   weight?: number;
+  /** Size of the moves: height, wavelength and length together. */
+  scale?: number;
+  /** Wavelength only: the same size, tighter (above 1) or looser (below 1). */
+  frequency?: number;
+  /** Mixed scale: 0 every element the same size, 1 widely mixed. La Linea pattern defaults to 0.6. */
+  variance?: number;
   pointer?: 'none' | 'chase' | 'avoid' | 'rub' | 'wrinkle';
   /** px. */
   pointerRadius?: number;
-  /** React to touch as well as a mouse. Default false. */
+  /** React to a hovering touch pointer as well as a mouse. Pressing and dragging a finger always works. Default false. */
   pointerOnTouch?: boolean;
+  /** A tap or click sends out a ripple that clears the lines. Default true. */
+  ripple?: boolean;
+  /** Finger drags: 'horizontal' (default; the page still scrolls up and down), true (every direction, for full-screen use), or false. */
+  drag?: 'horizontal' | boolean;
   /** Keep part empty for text: a side, or { side, size, feather }. */
   clear?: 'left' | 'right' | 'top' | 'bottom' | ClearOptions | null;
   /** Draw one frame and stop. Also on under prefers-reduced-motion. */
