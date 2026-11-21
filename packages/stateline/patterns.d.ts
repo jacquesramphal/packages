@@ -1,7 +1,7 @@
 // Types for @jacquesramphal/stateline/patterns, by Jacques Ramphal. MIT.
 
 export type PatternName =
-  | 'travellers' | 'school' | 'linea' | 'lineaGroup' | 'lineaPattern'
+  | 'travellers' | 'school' | 'horizon' | 'horizons' | 'islands'
   | 'strands' | 'waves' | 'pieces' | 'contours' | 'loops';
 
 export type PresetName = 'calm' | 'lively' | 'fish' | 'chase' | 'wrinkle' | 'beside' | 'mixed' | 'big';
@@ -27,13 +27,13 @@ export interface PatternOptions {
   strength?: number;
   /** More or fewer lines. Also scaled by the area. */
   density?: number;
-  /** Line width multiplier. */
-  weight?: number;
+  /** Line width in px, the same for every line. Default 2. */
+  stroke?: number;
   /** Size of the moves: height, wavelength and length together. */
   scale?: number;
   /** Wavelength only: the same size, tighter (above 1) or looser (below 1). */
   frequency?: number;
-  /** Mixed scale: 0 every element the same size, 1 widely mixed. La Linea pattern defaults to 0.6. */
+  /** Variety: each squiggle its own height and its own wavelength, 0 to 1. Lengths and the stroke stay the same. Islands defaults to 0.6. */
   variance?: number;
   pointer?: 'none' | 'chase' | 'avoid' | 'rub' | 'wrinkle';
   /** px. */

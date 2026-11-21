@@ -3,14 +3,14 @@
  *
  * The swell that follows the caret, the hand-drawn jag of an error, the wave
  * that runs round while it sends, and the pieces it flies apart into, drawn
- * as loose lines: La Linea, squiggling travellers, a school, strands, waves,
+ * as loose lines: squiggling travellers, a school, horizons, islands, strands, waves,
  * pieces, contours and loops.
  *
  *   const bg = StatelinePatterns.mount(canvasOrElement, { pattern: 'travellers' });
  *   bg.set({ pointer: 'chase' });   // change anything live
  *   bg.destroy();
  *
- *   StatelinePatterns.svg('lineaGroup', { width: 1200, height: 630 })  // a still, as SVG
+ *   StatelinePatterns.svg('horizons', { width: 1200, height: 630 })  // a still, as SVG
  *
  * Smart defaults: the ink is the element's text colour (currentColor) and
  * follows the theme; the number of lines scales with the area; under
@@ -37,9 +37,14 @@
   // By the square root of the area, so a card isn't sparse and a full screen
   // isn't crowded.
   const count = (n, o) => Math.max(1, Math.round(n * o.density * Math.sqrt(o.area)));
-  // Each element's size: the scale, varied by `variance` (0 all the same,
-  // 1 roughly a third to three times). Mixed scale.
-  const sizer = (rand, o) => () => o.scale * Math.exp((rand() * 2 - 1) * o.variance * 1.1);
+  // Each element's variety: its own height (h) and its own wavelength (w),
+  // drawn separately, so some squiggles are taller and some tighter. 0 all
+  // the same, 1 roughly a third to three times. Lengths and the stroke
+  // don't vary.
+  const sizer = (rand, o) => () => {
+    const v = (k) => o.scale * Math.exp((rand() * 2 - 1) * o.variance * k);
+    return { h: v(1.1), w: v(0.8) };
+  };
   // A few slow sines: the hand-drawn wobble every line carries.
   const wobble = (rand, k) => {
     const a = [0, 1, 2].map(() => [rand() * 2 + 0.5, rand() * TAU, rand() * 1.2 + 0.3]);
@@ -73,7 +78,8 @@
       closePath() { target.closePath(); },
       stroke() { target.stroke(); },
     };
-    Object.defineProperty(pen, 'lineWidth', { set(v) { target.lineWidth = v * o.weight; }, get() { return target.lineWidth / o.weight; } });
+    // One stroke for every line: the patterns' own widths are ignored.
+    Object.defineProperty(pen, 'lineWidth', { set() { target.lineWidth = o.stroke; }, get() { return o.stroke; } });
     return pen;
   }
 
@@ -94,16 +100,20 @@
     };
   }
 
-  /* ---------- La Linea: one line that becomes the field ---------- */
-  function makeLinea(rand, extra) {
+  /* ---------- Horizon: one line that becomes the field ----------
+   * Inspired by Osvaldo Cavandoli's La Linea, where a single line becomes
+   * everything. Here it rises into the field's box, a swell runs along the
+   * top (typing), it jags (error), a wave runs round (sending), the top
+   * flies apart (sent) and it settles flat again. */
+  function makeHorizon(rand, extra) {
     return Object.assign({
       len: 900, cycle: 10, phase: rand() * 10, fx: 0.25 + rand() * 0.4, fw: 0.24 + rand() * 0.12,
-      fh: 46 + rand() * 26, w: wobble(rand, 2.2), lw: 1.6 + rand() * 1.2, seed: Math.floor(rand() * 1e6), sc: 1, fq: 1,
+      fh: 46 + rand() * 26, w: wobble(rand, 2.2), lw: 1.6 + rand() * 1.2, seed: Math.floor(rand() * 1e6), sc: 1, sw: 1, fq: 1,
     }, extra);
   }
-  function drawLinea(p, l, t) {
+  function drawHorizon(p, l, t) {
     const u = ((((t + l.phase) % l.cycle) + l.cycle) % l.cycle) / l.cycle;
-    const L = l.len, fx = l.fx * L, fw = l.fw * L, sc = l.sc, wl = sc / l.fq;
+    const L = l.len, fx = l.fx * L, fw = l.fw * L, sc = l.sc, wl = l.sw / l.fq;
     const rise = ease(span(u, 0.12, 0.24)) * (1 - ease(span(u, 0.72, 0.84)));
     const h = l.fh * sc * rise, r = Math.min(14 * sc, h / 2);
     const swellAt = u < 0.14 ? ((u / 0.14) * 1.4 - 0.2) * L : -1e4;
@@ -210,9 +220,9 @@
         if (k !== key) {
           key = k; last = 0;
           list = Array.from({ length: count(school ? 34 : 26, o) }, () => {
-            const sc = size();
-            return { x: rand() * W, y: rand() * H, a: rand() * TAU, w: 0, sp: (26 + rand() * 40) * Math.sqrt(sc), boost: 1, side: rand() < 0.5 ? -1 : 1, orbit: 0.6 + rand() * 0.8, ph: rand() * 9,
-              amp: (3 + rand() * 3) * sc, wl: ((9 + rand() * 6) * sc) / o.frequency, len: (50 + rand() * 70) * sc, lw: 1.5 + rand() * 1.1, trail: [] };
+            const z = size();
+            return { x: rand() * W, y: rand() * H, a: rand() * TAU, w: 0, sp: (26 + rand() * 40) * Math.sqrt(o.scale), boost: 1, side: rand() < 0.5 ? -1 : 1, orbit: 0.6 + rand() * 0.8, ph: rand() * 9,
+              amp: (3 + rand() * 3) * z.h, wl: ((9 + rand() * 6) * z.w) / o.frequency, len: (50 + rand() * 70) * o.scale, trail: [] };
           });
           // Warm up so a still or the first frame already shows squiggles.
           for (let i = 0; i < 90; i++) step(W, H, 1 / 30, null);
@@ -251,21 +261,21 @@
     travellers: travellers(false),
     school: travellers(true),
 
-    linea: (o) => {
+    horizon: (o) => {
       const rand = rng(11);
-      const parts = sized((W, H, o) => makeLinea(rand, { len: W + 80, fx: 0.42, fw: 0.2 * o.scale, fh: 70, phase: 0, lw: 2.6, sc: o.scale, fq: o.frequency }));
-      return (p, W, H, t, ptr, o) => placed(p, -40, H * 0.62, 0, () => drawLinea(p, parts(W, H, o), t));
+      const parts = sized((W, H, o) => makeHorizon(rand, { len: W + 80, fx: 0.42, fw: 0.2 * o.scale, fh: 70, phase: 0, sc: o.scale, sw: o.scale, fq: o.frequency }));
+      return (p, W, H, t, ptr, o) => placed(p, -40, H * 0.62, 0, () => drawHorizon(p, parts(W, H, o), t));
     },
-    lineaGroup: (o) => {
+    horizons: (o) => {
       const rand = rng(23), size = sizer(rand, o);
       const parts = sized((W, H, o) => {
         const n = clamp(Math.round(4 * o.density * Math.sqrt(o.area)), 1, 9);
         return Array.from({ length: n }, (_, i) => ({ y: (i + 0.5) / n + (rand() - 0.5) * (0.24 / n), ang: (rand() - 0.5) * 0.12,
-          l: makeLinea(rand, { len: W * 1.3, cycle: 9 + rand() * 4, phase: i * 2.6, sc: size(), fq: o.frequency }) }));
+          l: (() => { const z = size(); return makeHorizon(rand, { len: W * 1.3, cycle: 9 + rand() * 4, phase: i * 2.6, sc: z.h, sw: z.w, fq: o.frequency }); })() }));
       });
-      return (p, W, H, t, ptr, o) => parts(W, H, o).forEach((g) => placed(p, -W * 0.15, g.y * H, g.ang, () => drawLinea(p, g.l, t)));
+      return (p, W, H, t, ptr, o) => parts(W, H, o).forEach((g) => placed(p, -W * 0.15, g.y * H, g.ang, () => drawHorizon(p, g.l, t)));
     },
-    lineaPattern: (o) => {
+    islands: (o) => {
       const rand = rng(37), size = sizer(rand, o);
       const parts = sized((W, H, o) => {
         const out = [], g = o.scale * (1 + o.variance * 0.4);
@@ -273,16 +283,16 @@
         for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
           if (rand() < 0.25) continue;
           out.push({ x: (c + (r % 2) * 0.5 - 0.1 + rand() * 0.2) * (W / cols), y: (r + 0.6 + (rand() - 0.5) * 0.4) * (H / rows), ang: (rand() - 0.5) * 0.25,
-            l: (() => { const sc = size(); return makeLinea(rand, { len: (170 + rand() * 120) * sc, fx: 0.25 + rand() * 0.2, fw: 0.35 + rand() * 0.15, fh: 22 + rand() * 14, cycle: 7 + rand() * 6, lw: 1.3 + rand() * 0.7, sc, fq: o.frequency }); })() });
+            l: (() => { const z = size(); return makeHorizon(rand, { len: (170 + rand() * 120) * o.scale * Math.sqrt(z.w), fx: 0.25 + rand() * 0.2, fw: 0.35 + rand() * 0.15, fh: 22 + rand() * 14, cycle: 7 + rand() * 6, sc: z.h, sw: z.w, fq: o.frequency }); })() });
         }
         return out;
       });
-      return (p, W, H, t, ptr, o) => parts(W, H, o).forEach((g) => placed(p, g.x, g.y, g.ang, () => drawLinea(p, g.l, t)));
+      return (p, W, H, t, ptr, o) => parts(W, H, o).forEach((g) => placed(p, g.x, g.y, g.ang, () => drawHorizon(p, g.l, t)));
     },
 
     strands: (o) => {
       const rand = rng(7), size = sizer(rand, o);
-      const E = Array.from({ length: count(6, o) }, () => ({ sc: size(), x0: rand(), y0: rand(), ang: rand() * TAU, turn: (rand() - 0.5) * 1.4, w1: rand() * 2 + 1, p1: rand() * TAU, w2: rand() * 3 + 2, p2: rand() * TAU, lw: 1.4 + rand() * 1.4, off: rand() * 9, len: 1.1 + rand() * 0.7 }));
+      const E = Array.from({ length: count(6, o) }, () => ({ ...((z) => ({ sc: z.h, sw: z.w }))(size()), x0: rand(), y0: rand(), ang: rand() * TAU, turn: (rand() - 0.5) * 1.4, w1: rand() * 2 + 1, p1: rand() * TAU, w2: rand() * 3 + 2, p2: rand() * TAU, lw: 1.4 + rand() * 1.4, off: rand() * 9, len: 1.1 + rand() * 0.7 }));
       return (p, W, H, t) => E.forEach((l) => {
         const L = Math.hypot(W, H) * l.len, pts = [];
         let x = l.x0 * W - (Math.cos(l.ang) * L) / 2, y = l.y0 * H - (Math.sin(l.ang) * L) / 2, a;
@@ -302,8 +312,8 @@
         pts.forEach(([px, py, pa, d], i) => {
           const nx = -Math.sin(pa), ny = Math.cos(pa);
           let off = 0;
-          if (st === 'swell') off = 9 * l.sc * gauss((d - ((u / 0.3) * 1.3 - 0.15) * L) / (70 * l.sc));
-          if (st === 'jag') off = Math.sin(((u - 0.3) / 0.25) * Math.PI) * 7 * l.sc * tri(d / ((22 * l.sc) / o.frequency));
+          if (st === 'swell') off = 9 * l.sc * gauss((d - ((u / 0.3) * 1.3 - 0.15) * L) / (70 * l.sw));
+          if (st === 'jag') off = Math.sin(((u - 0.3) / 0.25) * Math.PI) * 7 * l.sc * tri(d / ((22 * l.sw) / o.frequency));
           i ? p.lineTo(px + nx * off, py + ny * off) : p.moveTo(px + nx * off, py + ny * off);
         });
         p.stroke();
@@ -311,17 +321,17 @@
     },
     waves: (o) => {
       const rand = rng(7), n = count(14 / Math.sqrt(o.scale), o), size = sizer(rand, o);
-      const A = Array.from({ length: n }, (_, i) => ({ sc: size(), y: (i + 0.5) / n, tilt: (rand() - 0.5) * 0.08, w: wobble(rand, 3), sp: 40 + rand() * 90, ph: rand() * 2000, len: 160 + rand() * 220, amp: 5 + rand() * 7, lw: 1.2 + rand() * 1.3, dir: rand() < 0.5 ? 1 : -1 }));
+      const A = Array.from({ length: n }, (_, i) => ({ ...((z) => ({ sc: z.h, sw: z.w }))(size()), y: (i + 0.5) / n, tilt: (rand() - 0.5) * 0.08, w: wobble(rand, 3), sp: 40 + rand() * 90, ph: rand() * 2000, len: 160 + rand() * 220, amp: 5 + rand() * 7, lw: 1.2 + rand() * 1.3, dir: rand() < 0.5 ? 1 : -1 }));
       return (p, W, H, t) => A.forEach((l) => {
         p.beginPath(); p.lineWidth = l.lw;
         const cx = (((l.ph + t * l.sp * l.dir) % (W + 600)) + W + 600) % (W + 600) - 300;
-        for (let x = -20; x <= W + 20; x += 4) { const y = l.y * H + (x - W / 2) * l.tilt + l.w(x) + Math.sin((x - cx) / ((9 * l.sc) / o.frequency)) * l.amp * l.sc * gauss((x - cx) / ((l.len * l.sc) / 2)); x < -19 ? p.moveTo(x, y) : p.lineTo(x, y); }
+        for (let x = -20; x <= W + 20; x += 4) { const y = l.y * H + (x - W / 2) * l.tilt + l.w(x) + Math.sin((x - cx) / ((9 * l.sw) / o.frequency)) * l.amp * l.sc * gauss((x - cx) / ((l.len * o.scale) / 2)); x < -19 ? p.moveTo(x, y) : p.lineTo(x, y); }
         p.stroke();
       });
     },
     pieces: (o) => {
       const rand = rng(7), size = sizer(rand, o);
-      const B = Array.from({ length: count(260 / o.scale, o) }, () => ({ sc: size(), x: rand(), y: rand(), a: rand() * TAU, va: (rand() - 0.5) * 1.5, vx: (rand() - 0.5) * 12, vy: (rand() - 0.5) * 12, len: 6 + rand() * 12, row: Math.floor(rand() * 7), col: rand() }));
+      const B = Array.from({ length: count(260 / o.scale, o) }, () => ({ sc: size().h, x: rand(), y: rand(), a: rand() * TAU, va: (rand() - 0.5) * 1.5, vx: (rand() - 0.5) * 12, vy: (rand() - 0.5) * 12, len: 6 + rand() * 12, row: Math.floor(rand() * 7), col: rand() }));
       return (p, W, H, t) => {
         const u = (t % 7) / 7, g = u < 0.35 ? 0 : u < 0.55 ? (u - 0.35) / 0.2 : u < 0.7 ? 1 : Math.max(0, 1 - (u - 0.7) / 0.15), e = ease(g);
         p.lineWidth = 1.8;
@@ -336,17 +346,17 @@
     },
     contours: (o) => {
       const rand = rng(7), n = count(11 / Math.sqrt(o.scale), o), size = sizer(rand, o);
-      const C = Array.from({ length: n }, (_, i) => ({ sc: size(), y: (i + 0.5) / n, w: wobble(rand, 6), tilt: (rand() - 0.5) * 0.12, lw: 1.4 + rand(), jx: rand(), js: 0.04 + rand() * 0.06, jlen: 120 + rand() * 200, jl: 16 + rand() * 10 }));
+      const C = Array.from({ length: n }, (_, i) => ({ ...((z) => ({ sc: z.h, sw: z.w }))(size()), y: (i + 0.5) / n, w: wobble(rand, 6), tilt: (rand() - 0.5) * 0.12, lw: 1.4 + rand(), jx: rand(), js: 0.04 + rand() * 0.06, jlen: 120 + rand() * 200, jl: 16 + rand() * 10 }));
       return (p, W, H, t) => C.forEach((l) => {
         p.beginPath(); p.lineWidth = l.lw;
         const cx = (((l.jx + t * l.js) % 1.4) - 0.2) * W, pulse = 0.5 + 0.5 * Math.sin(t * 0.9 + l.jx * 9);
-        for (let x = -20; x <= W + 20; x += 3) { const y = l.y * H + (x - W / 2) * l.tilt + l.w(x + t * 20) + tri(x / ((l.jl * l.sc) / o.frequency)) * 9 * l.sc * gauss((x - cx) / (l.jlen * l.sc)) * pulse; x < -19 ? p.moveTo(x, y) : p.lineTo(x, y); }
+        for (let x = -20; x <= W + 20; x += 3) { const y = l.y * H + (x - W / 2) * l.tilt + l.w(x + t * 20) + tri(x / ((l.jl * l.sw) / o.frequency)) * 9 * l.sc * gauss((x - cx) / (l.jlen * o.scale)) * pulse; x < -19 ? p.moveTo(x, y) : p.lineTo(x, y); }
         p.stroke();
       });
     },
     loops: (o) => {
       const rand = rng(7), size = sizer(rand, o);
-      const D = Array.from({ length: count(9 / o.scale, o) }, () => ({ x: rand(), y: rand(), r: (40 + rand() * 120) * size(), rot: rand() * TAU, sp: (rand() - 0.5) * 0.2, lw: 1.3 + rand() * 1.2, ecc: 0.55 + rand() * 0.4 }));
+      const D = Array.from({ length: count(9 / o.scale, o) }, () => ({ x: rand(), y: rand(), r: (40 + rand() * 120) * size().h, rot: rand() * TAU, sp: (rand() - 0.5) * 0.2, lw: 1.3 + rand() * 1.2, ecc: 0.55 + rand() * 0.4 }));
       return (p, W, H, t) => {
         const caret = { x: W * (0.5 + 0.42 * Math.sin(t * 0.37)), y: H * (0.5 + 0.38 * Math.sin(t * 0.53 + 1)) };
         D.forEach((c) => {
@@ -366,8 +376,8 @@
   };
 
   const LIST = [
-    ['travellers', 'Travellers'], ['school', 'School'], ['linea', 'La Linea'], ['lineaGroup', 'La Linea, group'],
-    ['lineaPattern', 'La Linea, pattern'], ['strands', 'Strands'], ['waves', 'Waves'], ['pieces', 'Pieces'],
+    ['travellers', 'Travellers'], ['school', 'School'], ['horizon', 'Horizon'], ['horizons', 'Horizons'],
+    ['islands', 'Islands'], ['strands', 'Strands'], ['waves', 'Waves'], ['pieces', 'Pieces'],
     ['contours', 'Contours'], ['loops', 'Loops'],
   ];
 
@@ -378,10 +388,10 @@
     speed: 1,
     strength: 1,        // opacity of the lines
     density: 1,         // more or fewer lines; also scaled by the area
-    weight: 1,          // line width multiplier
+    stroke: 2,          // line width in px, the same for every line
     scale: 1,           // size of the moves: height, wavelength and length together
     frequency: 1,       // wavelength only: the same size, tighter (>1) or looser (<1)
-    variance: 0,        // mixed scale: 0 every element the same size, 1 widely mixed
+    variance: 0,        // variety: each squiggle its own height and wavelength, 0 to 1
     pointer: 'none',    // 'none' | 'chase' | 'avoid' | 'rub' | 'wrinkle'
     pointerRadius: 110,
     pointerOnTouch: false,
@@ -392,13 +402,13 @@
     time: 3.2,          // the moment a still shows, in seconds
   };
   // Defaults a pattern brings with it, under anything you pass.
-  const PATTERN_DEFAULTS = { lineaPattern: { variance: 0.6 } };
+  const PATTERN_DEFAULTS = { islands: { variance: 0.6 } };
   const PRESETS = {
     calm: { speed: 0.6, strength: 0.5 },
     lively: { speed: 1.4, density: 1.3 },
     fish: { pattern: 'school', pointer: 'avoid' },
     chase: { pattern: 'travellers', pointer: 'chase' },
-    wrinkle: { pattern: 'lineaGroup', pointer: 'wrinkle' },
+    wrinkle: { pattern: 'horizons', pointer: 'wrinkle' },
     beside: { clear: { side: 'left', size: 0.42, feather: 0.14 } },
     mixed: { variance: 0.7 },
     big: { scale: 1.8, density: 0.6 },

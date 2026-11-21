@@ -303,7 +303,7 @@ Pass any of these to `Stateline.field(form, { … })`, or as `options` to the Vu
 
 ## Patterns
 
-The same moves, as backgrounds with no form: the swell, the jag, the wave and the pieces, drawn as loose lines. Squiggling travellers wander with Brownian motion, La Linea lines rise into the field and settle back, and they can chase, flee, rub or wrinkle under the pointer. Play with every one in the [lab](https://ramphal.design/lab/line-patterns/).
+The same moves, as backgrounds with no form: the swell, the jag, the wave and the pieces, drawn as loose lines. Squiggling travellers wander with Brownian motion, horizon lines rise into the field and settle back (inspired by Osvaldo Cavandoli's *La Linea*), and they can chase, flee, rub or wrinkle under the pointer. Play with every one in the [lab](https://ramphal.design/lab/line-patterns/).
 
 ```js
 import StatelinePatterns from '@jacquesramphal/stateline/patterns';
@@ -314,7 +314,7 @@ const bg = StatelinePatterns.mount(document.querySelector('.hero'), {
   pointer: 'chase',
   clear: 'left',       // keep the left side empty for text
 });
-bg.set({ pattern: 'lineaGroup' });  // change anything live
+bg.set({ pattern: 'horizons' });  // change anything live
 bg.destroy();
 ```
 
@@ -326,9 +326,9 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 |---|---|
 | `travellers` | Short squiggles, each a packet of the sending wave, wandering with Brownian motion. The default |
 | `school` | Travellers that swim together like fish |
-| `linea` | One line that rises into the field, types, jags, sends, flies apart and settles flat |
-| `lineaGroup` | A few of those lines, out of step |
-| `lineaPattern` | Short lines scattered, each forming its own small field |
+| `horizon` | One line that rises into the field, types, jags, sends, flies apart and settles flat |
+| `horizons` | A few of those lines, out of step |
+| `islands` | Short lines scattered, each forming its own small field, mixed in height and wavelength |
 | `strands` | Long lines wandering across, each taking the states in turn |
 | `waves` | Loose lines with a wave travelling along each |
 | `pieces` | Strokes that drift, gather into lines and fly apart |
@@ -344,10 +344,10 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `speed` | `1` | |
 | `strength` | `1` | Opacity of the lines |
 | `density` | `1` | More or fewer lines, on top of the area scaling |
-| `weight` | `1` | Line width multiplier |
+| `stroke` | `2` | Line width in px, the same for every line |
 | `scale` | `1` | Size of the moves: height, wavelength and length together |
 | `frequency` | `1` | Wavelength only: the same size, tighter above 1, looser below |
-| `variance` | `0` | Mixed scale: each element its own size, from `0` (all alike) to `1` (widely mixed). La Linea pattern starts at `0.6` |
+| `variance` | `0` | Variety: each squiggle its own height and its own wavelength, from `0` (all alike) to `1` (widely mixed). Lengths and the stroke stay the same. Islands starts at `0.6` |
 | `pointer` | `'none'` | `chase` (circle it like fish), `avoid` (part around it), `rub` (squiggle where it moves), `wrinkle` (the error jag around it) |
 | `pointerRadius` | `110` | px |
 | `pointerOnTouch` | `false` | Hover effects for touch pointers too. Pressing and dragging a finger always moves the lines |
@@ -357,7 +357,7 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `still` | `false` | One frame, no animation |
 | `time` | `3.2` | Which moment a still shows |
 
-**Stills.** `StatelinePatterns.svg('lineaGroup', { width: 1200, height: 630, ink: '#38211c' })` returns the frame as an SVG string, for a CSS background or a file, and works in Node. Every pattern's still is in the lab's [stills folder](https://ramphal.design/lab/line-patterns/stills/travellers-light.svg).
+**Stills.** `StatelinePatterns.svg('horizons', { width: 1200, height: 630, ink: '#38211c' })` returns the frame as an SVG string, for a CSS background or a file, and works in Node. Every pattern's still is in the lab's [stills folder](https://ramphal.design/lab/line-patterns/stills/travellers-light.svg).
 
 ## Limitations
 
