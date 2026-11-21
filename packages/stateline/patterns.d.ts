@@ -2,7 +2,7 @@
 
 export type PatternName =
   | 'travellers' | 'school' | 'horizon' | 'horizons' | 'islands'
-  | 'strands' | 'waves' | 'pieces' | 'contours' | 'lattice' | 'patchwork' | 'loops';
+  | 'strands' | 'waves' | 'pieces' | 'contours' | 'crossings' | 'lattice' | 'patchwork' | 'loops';
 
 export type PresetName = 'calm' | 'lively' | 'fish' | 'chase' | 'wrinkle' | 'beside' | 'mixed' | 'big';
 
@@ -46,6 +46,8 @@ export interface PatternOptions {
   pointerOnTouch?: boolean;
   /** A tap or click sends out a ripple that clears the lines. Default true. */
   ripple?: boolean;
+  /** px the drawing runs past the element's edges. The element must not clip (overflow: visible). Default 0. */
+  bleed?: number;
   /** Finger drags: 'horizontal' (default; the page still scrolls up and down), true (every direction, for full-screen use), or false. */
   drag?: 'horizontal' | boolean;
   /** Keep part empty for text: a side, or { side, size, feather }. */

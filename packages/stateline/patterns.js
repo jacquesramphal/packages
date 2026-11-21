@@ -389,6 +389,44 @@
       const fam = contourFamily(rng(7), o, 11);
       return (p, W, H, t) => drawFamily(p, fam, o, 0, 0, W, H, t);
     },
+    // Crossings: a handful of long squiggles on the diagonals, crossing
+    // loosely. Each one's squiggle swells and flattens along its length
+    // and the wave runs along it, so it reads drawn by hand, not ruled.
+    // They gather on the side away from `clear`.
+    crossings: (o) => {
+      const rand = rng(61), size = sizer(rand, o);
+      const parts = sized((W, H, o) => {
+        const side = o.clear ? (typeof o.clear === 'string' ? o.clear : o.clear.side || 'left') : null;
+        const x0 = side === 'left' ? 0.5 : 0, x1 = side === 'right' ? 0.5 : 1;
+        return Array.from({ length: count(7, o) }, (_, i) => {
+          const z = size(), dir = i % 2 ? 1 : -1;
+          // Half lean each way so they cross; centres sit inside the box.
+          return { x: x0 + (x1 - x0) * (0.12 + rand() * 0.8), y: 0.15 + rand() * 0.7, a: dir * (0.55 + rand() * 0.4), inset: o.bleed ? 4 + rand() * o.bleed * 0.85 : 0,
+            len: (0.45 + rand() * 0.7) * Math.hypot(W, H) * 0.55 * o.scale, amp: (4 + rand() * 5) * z.h, wl: ((15 + rand() * 12) * z.w) / o.frequency,
+            env: [rand() * 6, rand() * 6, 1.5 + rand() * 2], sp: (0.6 + rand() * 0.8) * (rand() < 0.5 ? -1 : 1), drift: rand() * 6 };
+        });
+      });
+      return (p, W, H, t) => parts(W, H, o).forEach((l) => {
+        const a = l.a + Math.sin(t * 0.07 + l.drift) * 0.05, ca = Math.cos(a), sa = Math.sin(a);
+        const cx = l.x * W + Math.sin(t * 0.05 + l.drift) * 10, cy = l.y * H;
+        p.beginPath(); p.lineWidth = 1;
+        // With bleed, each line stops its own distance short of the canvas
+        // edge, so the ends land just past the card at varied points.
+        const m = l.inset, inBox = (x, y) => !m || (x > m && y > m && x < W - m && y < H - m);
+        let drawn = false;
+        for (let d = -l.len / 2; d <= l.len / 2; d += 3) {
+          const u = d / l.len + 0.5;
+          // The squiggle's height comes and goes along the line.
+          const env = 0.25 + 0.75 * Math.max(0, Math.sin(u * l.env[2] * Math.PI + l.env[0]) * 0.6 + Math.sin(u * 7 + l.env[1]) * 0.4);
+          const off = Math.sin((d / l.wl) * TAU - t * l.sp * 2) * l.amp * env;
+          const x = cx + ca * d - sa * off, y = cy + sa * d + ca * off;
+          if (!inBox(x, y)) { if (drawn) break; continue; }
+          drawn ? p.lineTo(x, y) : p.moveTo(x, y);
+          drawn = true;
+        }
+        p.stroke();
+      });
+    },
     // Two families of contours crossing at an angle: a woven lattice.
     lattice: (o) => {
       const rand = rng(19), a = fam2(rand, o);
@@ -438,7 +476,7 @@
   const LIST = [
     ['travellers', 'Travellers'], ['school', 'School'], ['horizon', 'Horizon'], ['horizons', 'Horizons'],
     ['islands', 'Islands'], ['strands', 'Strands'], ['waves', 'Waves'], ['pieces', 'Pieces'],
-    ['contours', 'Contours'], ['lattice', 'Lattice'], ['patchwork', 'Patchwork'], ['loops', 'Loops'],
+    ['contours', 'Contours'], ['crossings', 'Crossings'], ['lattice', 'Lattice'], ['patchwork', 'Patchwork'], ['loops', 'Loops'],
   ];
 
   const DEFAULTS = {
@@ -457,6 +495,7 @@
     pointerOnTouch: false,
     ripple: true,       // a tap or click sends out a ripple that clears the lines
     drag: 'horizontal', // finger drags: 'horizontal' (the page still scrolls up and down), true (all ways), false
+    bleed: 0,           // px the drawing runs past the element's edges (the element must not clip)
     clear: null,        // keep part empty for text: 'left' | 'right' | 'top' | 'bottom' | { side, size, feather }
     avoid: null,        // flow round shapes: 'text' (the text inside the element), a selector, or elements
     avoidPadding: 14,   // px kept round each shape
@@ -575,7 +614,8 @@
     if (!(el instanceof HTMLCanvasElement)) {
       canvas = document.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
+      const b = -(o.bleed || 0);
+      canvas.style.cssText = `position:absolute;inset:${b}px;width:calc(100% - ${2 * b}px);height:calc(100% - ${2 * b}px);display:block;pointer-events:none`;
       if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
       el.prepend(canvas);
     }

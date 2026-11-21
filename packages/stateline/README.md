@@ -333,6 +333,7 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `waves` | Loose lines with a wave travelling along each |
 | `pieces` | Strokes that drift, gather into lines and fly apart |
 | `contours` | Calm lines that catch the jag in patches |
+| `crossings` | A handful of long squiggles crossing loosely on the diagonals, swelling and flattening along their length, gathered away from `clear` |
 | `lattice` | Two families of contours crossing at an angle (`angle`, default 30) |
 | `patchwork` | A quilt of patches, some contours running across, some down |
 | `loops` | Loose rings that swell where an unseen caret passes |
@@ -354,6 +355,7 @@ Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/st
 | `pointerRadius` | `110` | px |
 | `pointerOnTouch` | `false` | Hover effects for touch pointers too. Pressing and dragging a finger always moves the lines |
 | `ripple` | `true` | A tap or click sends out a ripple that clears the lines |
+| `bleed` | `0` | px the drawing runs past the element's edges, where the element doesn't clip |
 | `drag` | `'horizontal'` | Finger drags move the lines: `'horizontal'` keeps vertical scrolling, `true` takes every direction (full screen), `false` none |
 | `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }`. `feather: 0` clears with a hard edge and no fade. `edge: 'break'` ends each line where it reaches the side instead, a natural edge with no fade or cut, and `slant` leans it (lattice follows its own angle) |
 | `avoid` | none | Flow round shapes: `'text'` (each line of text inside the element), a selector, or elements. Lines bend round them and travellers steer round them. Use with `clear` or on its own |
