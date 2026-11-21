@@ -70,6 +70,22 @@ ok('options.json lists every engine option once, defaults inside their ranges', 
   }
 });
 
+ok('patterns: every one draws a still, with a clear mask when asked', () => {
+  const P = require('./patterns.js');
+  for (const [key] of P.LIST) {
+    const out = P.svg(key, { width: 600, height: 340 });
+    assert.match(out, /^<svg /, key);
+    assert.ok((out.match(/<path /g) || []).length > 0, `${key} drew nothing`);
+  }
+  assert.match(P.svg('travellers', { clear: 'left' }), /mask="url\(#sl-clear\)"/);
+  for (const name of Object.keys(P.PRESETS)) assert.ok(P.svg('travellers', { preset: name }).startsWith('<svg'), name);
+});
+
+ok('the lab runs the package patterns, not a copy', () => {
+  const lab = readFileSync(new URL('../../public/lab/line-patterns/patterns.js', import.meta.url), 'utf8');
+  assert.equal(lab, readFileSync(new URL('./patterns.js', import.meta.url), 'utf8'));
+});
+
 const vue = await import('./vue.mjs').catch((e) => e);
 ok('vue entry loads', () => { assert.ok(vue.StatelineField && vue.StatelineCheckbox, vue.message); });
 const react = await import('./react.mjs').catch((e) => e);

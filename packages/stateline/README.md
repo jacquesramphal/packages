@@ -301,6 +301,59 @@ Pass any of these to `Stateline.field(form, { … })`, or as `options` to the Vu
 
 <!-- options:end -->
 
+## Patterns
+
+The same moves, as backgrounds with no form: the swell, the jag, the wave and the pieces, drawn as loose lines. Squiggling travellers wander with Brownian motion, La Linea lines rise into the field and settle back, and they can chase, flee, rub or wrinkle under the pointer. Play with every one in the [lab](https://ramphal.design/lab/line-patterns/).
+
+```js
+import StatelinePatterns from '@jacquesramphal/stateline/patterns';
+
+// Fills any element (it adds a canvas behind its content), or draws into a canvas.
+const bg = StatelinePatterns.mount(document.querySelector('.hero'), {
+  pattern: 'travellers',
+  pointer: 'chase',
+  clear: 'left',       // keep the left side empty for text
+});
+bg.set({ pattern: 'lineaGroup' });  // change anything live
+bg.destroy();
+```
+
+Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/@jacquesramphal/stateline@0/patterns.js"></script>` sets `window.StatelinePatterns`.
+
+**Smart defaults.** The ink is the element's text colour and follows the theme. The number of lines scales with the area. Under `prefers-reduced-motion` it draws one still frame. It pauses offscreen, and the pointer reacts to a mouse only.
+
+| Pattern | |
+|---|---|
+| `travellers` | Short squiggles, each a packet of the sending wave, wandering with Brownian motion. The default |
+| `school` | Travellers that swim together like fish |
+| `linea` | One line that rises into the field, types, jags, sends, flies apart and settles flat |
+| `lineaGroup` | A few of those lines, out of step |
+| `lineaPattern` | Short lines scattered, each forming its own small field |
+| `strands` | Long lines wandering across, each taking the states in turn |
+| `waves` | Loose lines with a wave travelling along each |
+| `pieces` | Strokes that drift, gather into lines and fly apart |
+| `contours` | Calm lines that catch the jag in patches |
+| `loops` | Loose rings that swell where an unseen caret passes |
+
+| Option | Default | |
+|---|---|---|
+| `pattern` | `'travellers'` | One of the above |
+| `preset` | | `calm`, `lively`, `fish` (school + avoid), `chase`, `wrinkle`, `beside` (clear the left) |
+| `ink` | text colour | Line colour |
+| `bg` | transparent | Fill behind the lines |
+| `speed` | `1` | |
+| `strength` | `1` | Opacity of the lines |
+| `density` | `1` | More or fewer lines, on top of the area scaling |
+| `weight` | `1` | Line width multiplier |
+| `pointer` | `'none'` | `chase` (circle it like fish), `avoid` (part around it), `rub` (squiggle where it moves), `wrinkle` (the error jag around it) |
+| `pointerRadius` | `110` | px |
+| `pointerOnTouch` | `false` | |
+| `clear` | none | `'left'`, `'right'`, `'top'`, `'bottom'`, or `{ side, size: 0.42, feather: 0.14 }` |
+| `still` | `false` | One frame, no animation |
+| `time` | `3.2` | Which moment a still shows |
+
+**Stills.** `StatelinePatterns.svg('lineaGroup', { width: 1200, height: 630, ink: '#38211c' })` returns the frame as an SVG string, for a CSS background or a file, and works in Node. Every pattern's still is in the lab's [stills folder](https://ramphal.design/lab/line-patterns/stills/travellers-light.svg).
+
 ## Limitations
 
 - **Text-like inputs only, for the field.** Email, text, search, url, tel, password and textarea. Selects, radios, ranges and dates aren't drawn yet.
