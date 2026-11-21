@@ -30,5 +30,14 @@
   "dependencies": {
     "@vue/compiler-dom": "^3.5.27",
     "@vue/compiler-sfc": "^3.5.27"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/packages.git",
+    "directory": "packages/smart-quotes"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/packages/issues"
+  },
+  "homepage": "https://github.com/jacquesramphal/packages/tree/main/packages/smart-quotes#readme"
 }

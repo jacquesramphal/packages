@@ -28,5 +28,13 @@
     "typeface",
     "lettering",
     "svg"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/packages.git",
+    "directory": "packages/counter-fill"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/packages/issues"
+  }
 }

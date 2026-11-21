@@ -1,0 +1,10 @@
+{
+  "name": "jacquesramphal-packages",
+  "private": true,
+  "description": "Open-source packages by Jacques Ramphal.",
+  "license": "MIT",
+  "author": { "name": "Jacques Ramphal", "url": "https://ramphal.design" },
+  "scripts": {
+    "test": "node packages/stateline/test.mjs && pnpm --filter @jacquesramphal/smart-quotes test"
+  }
+}

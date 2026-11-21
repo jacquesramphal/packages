@@ -19,5 +19,14 @@
   ],
   "engines": {
     "node": ">=18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacquesramphal/packages.git",
+    "directory": "packages/design-guard"
+  },
+  "bugs": {
+    "url": "https://github.com/jacquesramphal/packages/issues"
+  },
+  "homepage": "https://github.com/jacquesramphal/packages/tree/main/packages/design-guard#readme"
 }

@@ -9,11 +9,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jacquesramphal/jacquesramphal.github.io.git",
+    "url": "git+https://github.com/jacquesramphal/packages.git",
     "directory": "packages/stateline"
   },
   "bugs": {
-    "url": "https://github.com/jacquesramphal/jacquesramphal.github.io/issues"
+    "url": "https://github.com/jacquesramphal/packages/issues"
   },
   "homepage": "https://ramphal.design/doc/make-it-pop",
   "private": false,
